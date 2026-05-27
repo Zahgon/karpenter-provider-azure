@@ -20,8 +20,6 @@ import (
 	"context"
 
 	"sigs.k8s.io/karpenter/pkg/scheduling"
-
-	"github.com/samber/lo"
 )
 
 type availabilityCompatibilityFilterStage struct {
@@ -29,14 +27,11 @@ type availabilityCompatibilityFilterStage struct {
 }
 
 func NewAvailabilityCompatibilityFilterStage(requirements scheduling.Requirements) Stage {
-	return &availabilityCompatibilityFilterStage{
-		requirements: requirements,
-	}
+	_ = "STUB: not implemented"
+	return *new(Stage)
 }
 
 func (s *availabilityCompatibilityFilterStage) Process(_ context.Context, instanceOfferings []InstanceOffering) []InstanceOffering {
-	return lo.FilterMap(instanceOfferings, func(instanceOffering InstanceOffering, _ int) (InstanceOffering, bool) {
-		instanceOffering.Offerings = instanceOffering.Offerings.Available().Compatible(s.requirements)
-		return instanceOffering, len(instanceOffering.Offerings) > 0
-	})
+	_ = "STUB: not implemented"
+	return nil
 }

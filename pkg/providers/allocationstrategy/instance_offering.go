@@ -24,16 +24,6 @@ import (
 type InstanceOffering = allocationstrategystages.InstanceOffering
 
 func NewInstanceOfferings(instanceTypes []*corecloudprovider.InstanceType) []InstanceOffering {
-	instanceOfferings := make([]InstanceOffering, 0, len(instanceTypes))
-	for _, instanceType := range instanceTypes {
-		if instanceType == nil {
-			instanceOfferings = append(instanceOfferings, InstanceOffering{})
-			continue
-		}
-		instanceOfferings = append(instanceOfferings, InstanceOffering{
-			InstanceType: instanceType,
-			Offerings:    append(corecloudprovider.Offerings{}, instanceType.Offerings...),
-		})
-	}
-	return instanceOfferings
+	_ = "STUB: not implemented"
+	return nil
 }

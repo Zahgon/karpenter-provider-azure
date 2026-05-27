@@ -16,24 +16,7 @@ limitations under the License.
 
 package utils
 
-import "strings"
-
 func NormalizeClusterResourceGroupNameForLabel(resourceGroupName string) string {
-	truncated := resourceGroupName
-	truncated = strings.ReplaceAll(truncated, "(", "-")
-	truncated = strings.ReplaceAll(truncated, ")", "-")
-	const maxLen = 63
-	if len(truncated) > maxLen {
-		truncated = truncated[0:maxLen]
-	}
-
-	if strings.HasSuffix(truncated, "-") ||
-		strings.HasSuffix(truncated, "_") ||
-		strings.HasSuffix(truncated, ".") {
-		if len(truncated) > 62 {
-			return truncated[0:len(truncated)-1] + "z"
-		}
-		return truncated + "z"
-	}
-	return truncated
+	_ = "STUB: not implemented"
+	return ""
 }

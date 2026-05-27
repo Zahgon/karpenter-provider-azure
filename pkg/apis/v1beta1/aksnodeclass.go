@@ -17,10 +17,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"fmt"
-
-	"github.com/mitchellh/hashstructure/v2"
-	"github.com/samber/lo"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	karpv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 )
@@ -51,12 +47,7 @@ type ArtifactStreaming struct {
 // today. As a result, enabling artifact streaming on an AKSNodeClass used by ARM64 NodePools will
 // silently not take effect. The instance type provider compensates by excluding ARM64 SKUs when
 // artifact streaming is enabled.
-func (a *ArtifactStreaming) IsEnabled(arch string) bool {
-	if arch == karpv1.ArchitectureArm64 {
-		return false
-	}
-	return a != nil && a.Enabled != nil && *a.Enabled
-}
+func (a *ArtifactStreaming) IsEnabled(arch string) bool { _ = "STUB: not implemented"; return false }
 
 // AKSNodeClassSpec is the top level specification for the AKS Karpenter Provider.
 // This will contain configuration necessary to launch instances in AKS.
@@ -694,13 +685,7 @@ type AKSNodeClass struct {
 // 3. A field is removed from the hash calculations
 const AKSNodeClassHashVersion = "v3"
 
-func (in *AKSNodeClass) Hash() string {
-	return fmt.Sprint(lo.Must(hashstructure.Hash(in.Spec, hashstructure.FormatV2, &hashstructure.HashOptions{
-		SlicesAsSets:    true,
-		IgnoreZeroValue: true,
-		ZeroNil:         true,
-	})))
-}
+func (in *AKSNodeClass) Hash() string { _ = "STUB: not implemented"; return "" }
 
 // AKSNodeClassList contains a list of AKSNodeClass
 // +kubebuilder:object:root=true
@@ -712,17 +697,13 @@ type AKSNodeClassList struct {
 
 // GetEncryptionAtHost returns whether encryption at host is enabled for the node class.
 // Returns false if Security or EncryptionAtHost is nil.
-func (in *AKSNodeClass) GetEncryptionAtHost() bool {
-	if in.Spec.Security != nil && in.Spec.Security.EncryptionAtHost != nil {
-		return *in.Spec.Security.EncryptionAtHost
-	}
-	return false
-}
+func (in *AKSNodeClass) GetEncryptionAtHost() bool { _ = "STUB: not implemented"; return false }
 
 // IsArtifactStreamingEnabled returns whether artifact streaming should be enabled for this node class.
 // Delegates to ArtifactStreaming.IsEnabled which handles ARM64 and nil checks.
 func (in *AKSNodeClass) IsArtifactStreamingEnabled(arch string) bool {
-	return in.Spec.ArtifactStreaming.IsEnabled(arch)
+	_ = "STUB: not implemented"
+	return false
 }
 
 // IsArtifactStreamingExplicitlyEnabled returns true only when the user has explicitly
@@ -730,9 +711,8 @@ func (in *AKSNodeClass) IsArtifactStreamingEnabled(arch string) bool {
 // artifact streaming is not set (nil/default) or explicitly disabled.
 // Unlike IsArtifactStreamingEnabled, this is architecture-independent.
 func (in *AKSNodeClass) IsArtifactStreamingExplicitlyEnabled() bool {
-	return in.Spec.ArtifactStreaming != nil &&
-		in.Spec.ArtifactStreaming.Enabled != nil &&
-		*in.Spec.ArtifactStreaming.Enabled
+	_ = "STUB: not implemented"
+	return false
 }
 
 // IsLocalDNSEnabled returns whether LocalDNS should be enabled for this node class.
@@ -747,9 +727,7 @@ func (in *AKSNodeClass) IsArtifactStreamingExplicitlyEnabled() bool {
 // safe default. Karpenter core gates provisioning on the AKSNodeClass
 // aggregate Ready condition (which includes LocalDNSReady), so callers in
 // the provisioning path will not observe the unresolved state.
-func (in *AKSNodeClass) IsLocalDNSEnabled() bool {
-	return in.Status.LocalDNSState != nil && *in.Status.LocalDNSState == LocalDNSStateEnabled
-}
+func (in *AKSNodeClass) IsLocalDNSEnabled() bool { _ = "STUB: not implemented"; return false }
 
 // ResolvedLocalDNSForWire translates Status.LocalDNSState (the source of
 // truth, written by Karpenter) into a deterministic Mode to send downstream.
@@ -762,36 +740,18 @@ func (in *AKSNodeClass) IsLocalDNSEnabled() bool {
 //   - Mode != Preferred: return Spec as-is.
 //   - Mode == Preferred + Status.LocalDNSState == Enabled: Mode=Required.
 //   - Mode == Preferred + Status.LocalDNSState == Disabled or unset: Mode=Disabled.
-func (in *AKSNodeClass) ResolvedLocalDNSForWire() *LocalDNS {
-	if in.Spec.LocalDNS == nil {
-		return nil
-	}
-	if in.Spec.LocalDNS.Mode != LocalDNSModePreferred {
-		return in.Spec.LocalDNS
-	}
-	out := in.Spec.LocalDNS.DeepCopy()
-	if lo.FromPtr(in.Status.LocalDNSState) == LocalDNSStateEnabled {
-		out.Mode = LocalDNSModeRequired
-	} else {
-		out.Mode = LocalDNSModeDisabled
-	}
-	return out
-}
+func (in *AKSNodeClass) ResolvedLocalDNSForWire() *LocalDNS { _ = "STUB: not implemented"; return nil }
 
 // GetGPUMode returns the effective GPU mode.
 // Defaults to Driver if gpu or gpu.mode is nil, ensuring
 // backward compatibility (existing users always got drivers installed).
-func (in *AKSNodeClass) GetGPUMode() GPUMode {
-	if in.Spec.GPU == nil || in.Spec.GPU.Mode == nil {
-		return GPUModeDriver
-	}
-	return *in.Spec.GPU.Mode
-}
+func (in *AKSNodeClass) GetGPUMode() GPUMode { _ = "STUB: not implemented"; return *new(GPUMode) }
 
 // IsGPUDriverInstallationEnabled returns whether GPU driver installation
 // is enabled. Returns true when gpu is nil, gpu.mode is nil,
 // or mode is "Driver". Returns false only when explicitly
 // set to "None".
 func (in *AKSNodeClass) IsGPUDriverInstallationEnabled() bool {
-	return in.GetGPUMode() != GPUModeNone
+	_ = "STUB: not implemented"
+	return false
 }

@@ -17,8 +17,6 @@ limitations under the License.
 package azure
 
 import (
-	"fmt"
-
 	. "github.com/onsi/gomega"
 
 	v1 "k8s.io/api/core/v1"
@@ -35,32 +33,13 @@ var (
 	}
 )
 
-func (env *Environment) BeforeEach() {
-	if env.InClusterController {
-		persistedSettings = env.ExpectSettings()
-	}
-	env.Environment.BeforeEach()
-}
+func (env *Environment) BeforeEach() { _ = "STUB: not implemented"; return }
 
-func (env *Environment) Cleanup() {
-	env.Environment.Cleanup()
-	env.CleanupObjects(CleanableObjects...)
-	if env.IsAKSMachineAPIMode() {
-		// > Note: under current usage no machines should exist here,
-		// > as scaledown should ensure the machines are deleted
-		env.ExpectNoMachines()
-	}
+func (env *Environment) Cleanup() { _ = "STUB: not implemented"; return }
 
-	err := env.tracker.Cleanup()
-	Expect(err).ToNot(HaveOccurred(), "Failed to clean up Azure resources")
-}
+// > Note: under current usage no machines should exist here,
+// > as scaledown should ensure the machines are deleted
 
-func (env *Environment) AfterEach() {
-	fmt.Println("##[group]    E2E SUITE: LOG DUMP")
-	defer fmt.Println("##[endgroup]")
-	env.Environment.AfterEach()
-	// Ensure we reset settings after collecting the controller logs
-	if env.InClusterController {
-		env.ExpectSettingsReplaced(persistedSettings...)
-	}
-}
+func (env *Environment) AfterEach() { _ = "STUB: not implemented"; return }
+
+// Ensure we reset settings after collecting the controller logs

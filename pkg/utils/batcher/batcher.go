@@ -28,12 +28,8 @@ package batcher
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
-
-	"github.com/google/uuid"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // Batch is a group of requests with the same key.
@@ -105,209 +101,86 @@ func New[RequestPayload, ResponsePayload any](
 	executeBatchFunc ExecuteBatch[RequestPayload, ResponsePayload],
 	opts Options,
 ) *Batcher[RequestPayload, ResponsePayload] {
-	return &Batcher[RequestPayload, ResponsePayload]{
-		ctx:               ctx,
-		pendingBatches:    make(map[string]*Batch[RequestPayload, ResponsePayload]),
-		trigger:           make(chan struct{}, 1),
-		determineBatchKey: determineBatchKeyFunc,
-		executeBatch:      executeBatchFunc,
-		opts:              opts,
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // Start launches the background processing loop.
 func (b *Batcher[RequestPayload, ResponsePayload]) Start() {
-	go b.run()
+	_ = "STUB: not implemented"
+
+	// Enqueue adds a request to the appropriate batch and returns a response channel.
+	// The caller should select on the channel and ctx.Done().
+	return
 }
 
-// Enqueue adds a request to the appropriate batch and returns a response channel.
-// The caller should select on the channel and ctx.Done().
 func (b *Batcher[RequestPayload, ResponsePayload]) Enqueue(payload RequestPayload) (chan *Response[ResponsePayload], error) {
-	key, err := b.determineBatchKey(&payload)
-	if err != nil {
-		return nil, fmt.Errorf("failed to determine batch key: %w", err)
-	}
-	req := &BatchedRequest[RequestPayload, ResponsePayload]{
-		Payload:      payload,
-		ResponseChan: make(chan *Response[ResponsePayload], 1),
-		Key:          key,
-	}
-
-	b.mu.Lock()
-
-	batch, exists := b.pendingBatches[req.Key]
-	if !exists {
-		// First request for this key → need to initialize batch first
-		batch = &Batch[RequestPayload, ResponsePayload]{
-			ID:       uuid.New().String(),
-			Key:      req.Key,
-			Requests: make([]*BatchedRequest[RequestPayload, ResponsePayload], 0, b.opts.MaxBatchSize),
-		}
-		b.pendingBatches[req.Key] = batch
-	}
-	batch.Requests = append(batch.Requests, req)
-
-	b.mu.Unlock()
-
-	// Alert the background loop (e.g., start timer, check execution conditions)
-	// Non-blocking signal (buffer=1 coalesces multiple enqueues)
-	select {
-	case b.trigger <- struct{}{}:
-	default:
-	}
-
-	// Return the channel the caller should wait on.
-	// The channel will receive the batch response once the batch fires and executeBatch is done.
-	return req.ResponseChan, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
+
+// First request for this key → need to initialize batch first
+
+// Alert the background loop (e.g., start timer, check execution conditions)
+// Non-blocking signal (buffer=1 coalesces multiple enqueues)
+
+// Return the channel the caller should wait on.
+// The channel will receive the batch response once the batch fires and executeBatch is done.
 
 // Main loop: keep collecting requests → wait for trigger → execute batches → repeat.
-func (b *Batcher[RequestPayload, ResponsePayload]) run() {
-	defer b.drain()
+func (b *Batcher[RequestPayload, ResponsePayload]) run() { _ = "STUB: not implemented"; return }
 
-	for {
-		select {
-		case <-b.ctx.Done():
-			return
+// Woken up, as there's a new request and enqueuement. Then:
 
-		case <-b.trigger:
-			batcherIterationID := uuid.New().String()
-			waitStartTime := time.Now()
-			// Woken up, as there's a new request and enqueuement. Then:
-			b.waitForIdle()
-			if b.ctx.Err() != nil {
-				return // batcher context canceled, drain
-			}
-			// Note: the timing window is shared across all batch keys. A late-arriving
-			// request for key B resets the idle timer even if key A's batch was already
-			// "ready." MaxTimeout bounds the total wait.
-			// Execution also fires for all batches at once from that shared timer.
-			// This is tolerable because requests typically arrive in bursts from the provisioner.
-			// Suggestion: if needed, we could add per-batch-key timers for more precise control, but it adds complexity.
+// batcher context canceled, drain
 
-			// TODO: use metrics instead?
-			log.FromContext(b.ctx).V(2).Info("batcher iteration finishing wait, ready to execute batches",
-				"batcherIterationID", batcherIterationID,
-				"waitStartTime", waitStartTime,
-				"waitDuration", time.Since(waitStartTime),
-				"batchCount", len(b.pendingBatches))
-			b.executeBatches(batcherIterationID)
-		}
-	}
-}
+// Note: the timing window is shared across all batch keys. A late-arriving
+// request for key B resets the idle timer even if key A's batch was already
+// "ready." MaxTimeout bounds the total wait.
+// Execution also fires for all batches at once from that shared timer.
+// This is tolerable because requests typically arrive in bursts from the provisioner.
+// Suggestion: if needed, we could add per-batch-key timers for more precise control, but it adds complexity.
+
+// TODO: use metrics instead?
 
 // waitForIdle blocks until it's time to execute batches. Returns when:
 //  1. idleTimeout passes with no new requests (burst ended)
 //  2. maxTimeout passes (latency SLA)
 //  3. Any batch reaches maxBatchSize (full batch)
 func (b *Batcher[RequestPayload, ResponsePayload]) waitForIdle() {
+	_ = "STUB: not implemented"
 	// Check immediately in case all requests were enqueued before we started
 	// listening on the trigger channel (their signals may have been coalesced/dropped).
-	if b.anyBatchFull() {
-		return
-	}
-
-	maxTimer := time.NewTimer(b.opts.MaxTimeout)
-	idleTimer := time.NewTimer(b.opts.IdleTimeout)
-	defer maxTimer.Stop()
-	defer idleTimer.Stop()
-
-	for {
-		select {
-		case <-b.ctx.Done():
-			return
-
-		case <-b.trigger:
-			// More request arrived and its enqueuement occurred.
-
-			if b.anyBatchFull() {
-				return
-			}
-
-			// Reset idle timer
-			if !idleTimer.Stop() {
-				// Timer is over, but we don't care and still need to reset the timer.
-				// Need draining to prevent the leaky fire, even after reset.
-				// See Stop() doc for more details.
-				<-idleTimer.C
-			}
-			idleTimer.Reset(b.opts.IdleTimeout)
-
-		case <-idleTimer.C:
-			return
-		case <-maxTimer.C:
-			return
-		}
-	}
+	return
 }
+
+// More request arrived and its enqueuement occurred.
+
+// Reset idle timer
+
+// Timer is over, but we don't care and still need to reset the timer.
+// Need draining to prevent the leaky fire, even after reset.
+// See Stop() doc for more details.
 
 // anyBatchFull returns true if any pending batch has reached MaxBatchSize.
 func (b *Batcher[RequestPayload, ResponsePayload]) anyBatchFull() bool {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	for _, batch := range b.pendingBatches {
-		if len(batch.Requests) >= b.opts.MaxBatchSize {
-			return true
-		}
-	}
+	_ = "STUB: not implemented"
 	return false
 }
 
 // executeBatches atomically swaps out the batch map and dispatches all batches.
 func (b *Batcher[RequestPayload, ResponsePayload]) executeBatches(batcherIterationID string) {
+	_ = "STUB: not implemented"
 	// Atomically swaps out the batch map.
-	b.mu.Lock()
-	batches := b.pendingBatches
-	b.pendingBatches = make(map[string]*Batch[RequestPayload, ResponsePayload])
-	b.mu.Unlock()
-
-	// Dispatch batches in parallel, as they are independent (different keys).
-	for _, batch := range batches {
-		// TODO: use metrics instead?
-		log.FromContext(b.ctx).V(2).Info("begin executing batch",
-			"batcherIterationID", batcherIterationID,
-			"ID", batch.ID,
-			"key", batch.Key,
-			"size", len(batch.Requests))
-		go func(batch *Batch[RequestPayload, ResponsePayload]) {
-			defer func() {
-				if r := recover(); r != nil {
-					log.FromContext(b.ctx).Error(fmt.Errorf("%v", r), "panic in batch executor, distributing error to callers")
-					err := fmt.Errorf("batch execution panicked: %v", r)
-					for _, req := range batch.Requests {
-						// Non-blocking: if executeBatch already wrote a response before
-						// panicking, the buffer is full — skip to avoid goroutine leak.
-						select {
-						case req.ResponseChan <- &Response[ResponsePayload]{Err: err}:
-						default:
-						}
-					}
-				}
-			}()
-
-			b.executeBatch(b.ctx, batch)
-		}(batch)
-	}
+	return
 }
+
+// Dispatch batches in parallel, as they are independent (different keys).
+
+// TODO: use metrics instead?
+
+// Non-blocking: if executeBatch already wrote a response before
+// panicking, the buffer is full — skip to avoid goroutine leak.
 
 // drain fails all in-flight requests with a shutdown error.
-func (b *Batcher[RequestPayload, ResponsePayload]) drain() {
-	b.mu.Lock()
-	batches := b.pendingBatches
-	b.pendingBatches = make(map[string]*Batch[RequestPayload, ResponsePayload])
-	b.mu.Unlock()
-
-	shutdownErr := fmt.Errorf("batcher shutting down")
-	drained := 0
-	for _, batch := range batches {
-		for _, req := range batch.Requests {
-			req.ResponseChan <- &Response[ResponsePayload]{Err: shutdownErr}
-			drained++
-		}
-	}
-
-	if drained > 0 {
-		log.FromContext(b.ctx).V(2).Info("batcher drained pending requests on shutdown",
-			"drainedRequests", drained)
-	}
-}
+func (b *Batcher[RequestPayload, ResponsePayload]) drain() { _ = "STUB: not implemented"; return }

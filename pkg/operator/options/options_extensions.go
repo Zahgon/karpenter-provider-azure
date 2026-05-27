@@ -16,18 +16,8 @@ limitations under the License.
 
 package options
 
-import (
-	"github.com/Azure/karpenter-provider-azure/pkg/consts"
-)
+func (o *Options) IsAzureCNIOverlay() bool { _ = "STUB: not implemented"; return false }
 
-func (o *Options) IsAzureCNIOverlay() bool {
-	return o.NetworkPlugin == consts.NetworkPluginAzure && o.NetworkPluginMode == consts.NetworkPluginModeOverlay
-}
+func (o *Options) IsCiliumNodeSubnet() bool { _ = "STUB: not implemented"; return false }
 
-func (o *Options) IsCiliumNodeSubnet() bool {
-	return o.NetworkPlugin == consts.NetworkPluginAzure && o.NetworkPluginMode == consts.NetworkPluginModeNone && o.NetworkDataplane == consts.NetworkDataplaneCilium
-}
-
-func (o *Options) IsNetworkPluginNone() bool {
-	return o.NetworkPlugin == consts.NetworkPluginNone
-}
+func (o *Options) IsNetworkPluginNone() bool { _ = "STUB: not implemented"; return false }

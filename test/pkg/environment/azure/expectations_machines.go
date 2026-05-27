@@ -17,48 +17,25 @@ limitations under the License.
 package azure
 
 import (
-	"fmt"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/samber/lo"
 
 	containerservice "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v9"
 )
 
 func (env *Environment) ExpectListMachines() []*containerservice.Machine {
-	GinkgoHelper()
-	var machines []*containerservice.Machine
-	pager := env.machinesClient.NewListPager(env.ClusterResourceGroup, env.ClusterName, env.MachineAgentPoolName, nil)
-	Expect(pager).ToNot(BeNil())
-	for pager.More() {
-		page, err := pager.NextPage(env.Context)
-		Expect(err).ToNot(HaveOccurred())
-		machines = append(machines, page.Value...)
-	}
-
-	return machines
+	_ = "STUB: not implemented"
+	return nil
 }
 
-func (env *Environment) ExpectNoMachines() {
-	GinkgoHelper()
-	Expect(len(env.ExpectListMachines())).To(Equal(0))
-}
+func (env *Environment) ExpectNoMachines() { _ = "STUB: not implemented"; return }
 
 func (env *Environment) EventuallyExpectCreatedMachineCount(comparator string, count int) []*containerservice.Machine {
-	GinkgoHelper()
-	By(fmt.Sprintf("waiting for created machines to be %s to %d", comparator, count))
-	var createdMachines []*containerservice.Machine
-	Eventually(func(g Gomega) {
-		createdMachines = env.ExpectListMachines()
-		g.Expect(len(createdMachines)).To(BeNumerically(comparator, count),
-			fmt.Sprintf("expected %d created nodes, had %d (%v)", count, len(createdMachines), MachineNames(createdMachines)))
-	}).Should(Succeed())
-	return createdMachines
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func MachineNames(machines []*containerservice.Machine) []string {
-	return lo.Map(machines, func(m *containerservice.Machine, index int) string {
-		return *m.Name
-	})
+	_ = "STUB: not implemented"
+	return nil
 }

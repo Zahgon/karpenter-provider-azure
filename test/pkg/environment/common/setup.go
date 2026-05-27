@@ -17,29 +17,17 @@ limitations under the License.
 package common
 
 import (
-	"fmt"
-	"sync"
-	"time"
-
-	"github.com/samber/lo"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	schedulingv1 "k8s.io/api/scheduling/v1"
 	storagev1 "k8s.io/api/storage/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	karpv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 	"sigs.k8s.io/karpenter/pkg/apis/v1alpha1"
-	"sigs.k8s.io/karpenter/pkg/test"
-	"sigs.k8s.io/karpenter/pkg/utils/pod"
 
 	"github.com/Azure/karpenter-provider-azure/pkg/apis/v1beta1"
-	"github.com/Azure/karpenter-provider-azure/test/pkg/debug"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -67,132 +55,44 @@ var (
 	}
 )
 
-func (env *Environment) BeforeEach() {
-	debug.BeforeEach(env.Context, env.Config, env.Client)
+func (env *Environment) BeforeEach() { _ = "STUB: not implemented"; return }
 
-	// Expect this cluster to be clean for test runs to execute successfully
-	env.ExpectCleanCluster()
+// Expect this cluster to be clean for test runs to execute successfully
 
-	env.Monitor.Reset()
-	env.StartingNodeCount = env.Monitor.NodeCountAtReset()
-}
+func (env *Environment) ExpectCleanCluster() { _ = "STUB: not implemented"; return }
 
-func (env *Environment) ExpectCleanCluster() {
-	env.ExpectSystemNodesTainted()
-	env.ExpectNoPodsInDefaultNamespace()
-	env.EventuallyExpectNoProvisionablePods()
+// This assumes the cluster is created without managed pools
 
-	// This assumes the cluster is created without managed pools
-	env.ExpectNoNodePoolOrAKSNodeClass()
-}
+func (env *Environment) ExpectSystemNodesTainted() { _ = "STUB: not implemented"; return }
 
-func (env *Environment) ExpectSystemNodesTainted() {
-	var nodes corev1.NodeList
-	Expect(env.Client.List(env.Context, &nodes)).To(Succeed())
-	for _, node := range nodes.Items {
-		if len(node.Spec.Taints) == 0 && !node.Spec.Unschedulable {
-			Fail(fmt.Sprintf("expected system pool node %s to be tainted", node.Name))
-		}
-	}
-}
+func (env *Environment) ExpectNoPodsInDefaultNamespace() { _ = "STUB: not implemented"; return }
 
-func (env *Environment) ExpectNoPodsInDefaultNamespace() {
-	var pods corev1.PodList
-	Expect(env.Client.List(env.Context, &pods)).To(Succeed())
-	for _, pod := range pods.Items {
-		Expect(pod.Namespace).ToNot(Equal("default"),
-			fmt.Sprintf("expected no pods in the `default` namespace, found %s/%s", pod.Namespace, pod.Name))
-	}
-}
+func (env *Environment) EventuallyExpectNoProvisionablePods() { _ = "STUB: not implemented"; return }
 
-func (env *Environment) EventuallyExpectNoProvisionablePods() {
-	Eventually(func(g Gomega) {
-		var pods corev1.PodList
-		g.Expect(env.Client.List(env.Context, &pods)).To(Succeed())
-		for _, p := range pods.Items {
-			g.Expect(pod.IsProvisionable(&p)).To(BeFalse(),
-				fmt.Sprintf("expected to have no provisionable pods, found %s/%s", p.Namespace, p.Name))
-		}
-	}).WithPolling(10 * time.Second).WithTimeout(5 * time.Minute).Should(Succeed())
-}
+func (env *Environment) ExpectNoNodePoolOrAKSNodeClass() { _ = "STUB: not implemented"; return }
 
-func (env *Environment) ExpectNoNodePoolOrAKSNodeClass() {
-	for _, obj := range []client.Object{&karpv1.NodePool{}, &v1beta1.AKSNodeClass{}} {
-		metaList := &metav1.PartialObjectMetadataList{}
-		gvk := lo.Must(apiutil.GVKForObject(obj, env.Client.Scheme()))
-		metaList.SetGroupVersionKind(gvk)
-		Expect(env.Client.List(env.Context, metaList, client.Limit(1))).To(Succeed())
-		Expect(metaList.Items).To(HaveLen(0),
-			fmt.Sprintf("expected no %s to exist", gvk.Kind))
-	}
-}
+func (env *Environment) Cleanup() { _ = "STUB: not implemented"; return }
 
-func (env *Environment) Cleanup() {
-	env.CleanupObjects(CleanableObjects...)
-	env.EventuallyExpectNoLeakedKubeNodeLease()
-	env.eventuallyExpectScaleDown()
-	if env.InClusterController {
-		env.ExpectNoCrashes()
-	}
-}
-
-func (env *Environment) AfterEach() {
-	debug.AfterEach(env.Context)
-	if env.InClusterController {
-		env.printControllerLogs(&corev1.PodLogOptions{Container: "controller"})
-	}
-}
+func (env *Environment) AfterEach() { _ = "STUB: not implemented"; return }
 
 func (env *Environment) CleanupObjects(cleanableObjects ...client.Object) {
-	time.Sleep(time.Second) // wait one second to let the caches get up-to-date for deletion
-	wg := sync.WaitGroup{}
-	for _, obj := range cleanableObjects {
-		wg.Add(1)
-		go func(obj client.Object) {
-			defer wg.Done()
-			defer GinkgoRecover()
-			Eventually(func(g Gomega) {
-				// This only gets the metadata for the objects since we don't need all the details of the objects
-				metaList := &metav1.PartialObjectMetadataList{}
-				metaList.SetGroupVersionKind(lo.Must(apiutil.GVKForObject(obj, env.Client.Scheme())))
-				g.Expect(env.Client.List(env, metaList, client.HasLabels([]string{test.DiscoveryLabel}))).To(Succeed())
-				// Limit the concurrency of these calls to 50 workers per object so that we try to limit how aggressively we
-				// are deleting so that we avoid getting client-side throttled
-				workqueue.ParallelizeUntil(env, 50, len(metaList.Items), func(i int) {
-					defer GinkgoRecover()
-					g.Expect(env.ExpectTestingFinalizerRemoved(&metaList.Items[i])).To(Succeed())
-					g.Expect(client.IgnoreNotFound(env.Client.Delete(env, &metaList.Items[i],
-						client.PropagationPolicy(metav1.DeletePropagationForeground),
-						&client.DeleteOptions{GracePeriodSeconds: lo.ToPtr(int64(0))}))).To(Succeed())
-				})
-				// If the deletes eventually succeed, we should have no elements here at the end of the test
-				g.Expect(env.Client.List(env, metaList, client.HasLabels([]string{test.DiscoveryLabel}), client.Limit(1))).To(Succeed())
-				g.Expect(metaList.Items).To(HaveLen(0))
-			}).Should(Succeed())
-		}(obj)
-	}
-	wg.Wait()
+	_ = "STUB: not implemented"
+	return
+	// wait one second to let the caches get up-to-date for deletion
 }
+
+// This only gets the metadata for the objects since we don't need all the details of the objects
+
+// Limit the concurrency of these calls to 50 workers per object so that we try to limit how aggressively we
+// are deleting so that we avoid getting client-side throttled
+
+// If the deletes eventually succeed, we should have no elements here at the end of the test
 
 func (env *Environment) ExpectTestingFinalizerRemoved(obj client.Object) error {
-	metaObj := &metav1.PartialObjectMetadata{}
-	metaObj.SetGroupVersionKind(lo.Must(apiutil.GVKForObject(obj, env.Client.Scheme())))
-	if err := env.Client.Get(env, client.ObjectKeyFromObject(obj), metaObj); err != nil {
-		return client.IgnoreNotFound(err)
-	}
-	deepCopy := metaObj.DeepCopy()
-	metaObj.Finalizers = lo.Reject(metaObj.Finalizers, func(finalizer string, _ int) bool {
-		return finalizer == TestingFinalizer
-	})
-
-	if !equality.Semantic.DeepEqual(metaObj, deepCopy) {
-		// If the Group is the "core" APIs, then we can strategic merge patch
-		// CRDs do not currently have support for strategic merge patching, so we can't blindly do it
-		// https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#advanced-features-and-flexibility:~:text=Yes-,strategic%2Dmerge%2Dpatch,-The%20new%20endpoints
-		if metaObj.GroupVersionKind().Group == "" {
-			return client.IgnoreNotFound(env.Client.Patch(env, metaObj, client.StrategicMergeFrom(deepCopy)))
-		}
-		return client.IgnoreNotFound(env.Client.Patch(env, metaObj, client.MergeFrom(deepCopy)))
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// If the Group is the "core" APIs, then we can strategic merge patch
+// CRDs do not currently have support for strategic merge patching, so we can't blindly do it
+// https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#advanced-features-and-flexibility:~:text=Yes-,strategic%2Dmerge%2Dpatch,-The%20new%20endpoints

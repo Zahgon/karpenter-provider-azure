@@ -17,17 +17,12 @@ limitations under the License.
 package fake
 
 import (
-	"context"
 	_ "embed"
-	"encoding/json"
-	"fmt"
-	"sort"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	fakesync "github.com/Azure/karpenter-provider-azure/pkg/fake/sync"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/zone"
-	"github.com/samber/lo"
 )
 
 //go:embed locations.json
@@ -50,86 +45,22 @@ type SubscriptionsAPI struct {
 	SubscriptionsAPIBehavior
 }
 
-func NewSubscriptionsAPI() (*SubscriptionsAPI, error) {
-	result := &SubscriptionsAPI{
-		SubscriptionsAPIBehavior: SubscriptionsAPIBehavior{
-			NewListLocationsPagerBehavior: MockedFunction[ListLocationsInput, armsubscriptions.ClientListLocationsResponse]{},
-			Locations:                     fakesync.Map[string, armsubscriptions.Location]{},
-			UseFakeData:                   true,
-		},
-	}
+func NewSubscriptionsAPI() (*SubscriptionsAPI, error) { _ = "STUB: not implemented"; return nil, nil }
 
-	err := loadLocationsFromFile(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
+func (api *SubscriptionsAPI) Reset() { _ = "STUB: not implemented"; return }
 
-func (api *SubscriptionsAPI) Reset() {
-	api.NewListLocationsPagerBehavior.Reset()
-	api.Locations.Clear()
-	if api.UseFakeData {
-		err := loadLocationsFromFile(api)
-		if err != nil {
-			panic(err) // Not ideal, but shouldn't happen
-		}
-	}
-}
+// Not ideal, but shouldn't happen
 
 func (api *SubscriptionsAPI) NewListLocationsPager(
 	subscriptionID string,
 	options *armsubscriptions.ClientListLocationsOptions,
 ) *runtime.Pager[armsubscriptions.ClientListLocationsResponse] {
-	input := &ListLocationsInput{
-		SubscriptionID: subscriptionID,
-		Options:        options,
-	}
-
-	pagingHandler := runtime.PagingHandler[armsubscriptions.ClientListLocationsResponse]{
-		More: func(page armsubscriptions.ClientListLocationsResponse) bool {
-			return false // TODO: It might be ideal if we had a MockPager which sometimes simulated multiple pages of results to ensure we handle that correctly
-		},
-		Fetcher: func(ctx context.Context, _ *armsubscriptions.ClientListLocationsResponse) (armsubscriptions.ClientListLocationsResponse, error) {
-			return api.NewListLocationsPagerBehavior.Invoke(input, func(input *ListLocationsInput) (armsubscriptions.ClientListLocationsResponse, error) {
-				output := armsubscriptions.LocationListResult{
-					Value: []*armsubscriptions.Location{},
-				}
-
-				api.Locations.Range(func(key string, value armsubscriptions.Location) bool {
-					output.Value = append(output.Value, &value)
-					return true
-				})
-
-				// Sort the result according to Name so that we have a stable base to write asserts upon
-				sort.Slice(output.Value, func(i, j int) bool {
-					l := output.Value[i]
-					r := output.Value[j]
-					return lo.FromPtr(l.Name) < lo.FromPtr(r.Name)
-				})
-
-				return armsubscriptions.ClientListLocationsResponse{
-					LocationListResult: output,
-				}, nil
-			})
-		},
-	}
-
-	return runtime.NewPager(pagingHandler)
-}
-
-func loadLocationsFromFile(api *SubscriptionsAPI) error {
-	data := []byte(fakeLocationsJSON)
-
-	var locations []*armsubscriptions.Location
-	err := json.Unmarshal(data, &locations)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal locations JSON: %w", err)
-	}
-
-	for _, location := range locations {
-		api.Locations.Store(lo.FromPtr(location.Name), *location)
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// TODO: It might be ideal if we had a MockPager which sometimes simulated multiple pages of results to ensure we handle that correctly
+
+// Sort the result according to Name so that we have a stable base to write asserts upon
+
+func loadLocationsFromFile(api *SubscriptionsAPI) error { _ = "STUB: not implemented"; return nil }

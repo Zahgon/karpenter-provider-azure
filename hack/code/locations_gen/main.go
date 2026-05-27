@@ -17,18 +17,9 @@ limitations under the License.
 package main
 
 import (
-	"context"
-	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"os"
-	"regexp"
-	"strings"
-
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
-	"github.com/samber/lo"
 )
 
 func main() {
@@ -40,75 +31,28 @@ func main() {
 	generateLocations(flag.Arg(0))
 }
 
-func generateLocations(filePath string) {
-	ctx := context.Background()
+func generateLocations(filePath string) { _ = "STUB: not implemented"; return }
 
-	// Get subscription ID from environment variable
-	subscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
-	if subscriptionID == "" {
-		log.Fatalf("AZURE_SUBSCRIPTION_ID environment variable is required")
-	}
+// Get subscription ID from environment variable
 
-	// Create Azure credentials using default credential chain
-	cred, err := azidentity.NewDefaultAzureCredential(nil)
-	if err != nil {
-		log.Fatalf("Failed to create Azure credentials: %v", err)
-	}
+// Create Azure credentials using default credential chain
 
-	// Create subscriptions client
-	client, err := armsubscriptions.NewClient(cred, nil)
-	if err != nil {
-		log.Fatalf("Failed to create subscriptions client: %v", err)
-	}
+// Create subscriptions client
 
-	// Get locations using the pager
-	fmt.Printf("Fetching locations for subscription: %s\n", subscriptionID)
-	pager := client.NewListLocationsPager(subscriptionID, nil)
+// Get locations using the pager
 
-	var locations []*armsubscriptions.Location
+// Convert to JSON and save to file
 
-	for pager.More() {
-		page, err := pager.NextPage(ctx)
-		if err != nil {
-			log.Fatalf("Failed to get next page of locations: %v", err)
-		}
+// Redact subscription IDs from the JSON data
 
-		locations = append(locations, page.Value...)
-	}
-
-	locations = lo.Filter(locations, func(location *armsubscriptions.Location, _ int) bool {
-		return !strings.Contains(lo.FromPtr(location.Metadata.Geography), "Stage")
-	})
-
-	fmt.Printf("Found %d locations\n", len(locations))
-
-	// Convert to JSON and save to file
-	jsonData, err := json.MarshalIndent(locations, "", "  ")
-	if err != nil {
-		log.Fatalf("Failed to marshal locations to JSON: %v", err)
-	}
-
-	// Redact subscription IDs from the JSON data
-	redactedJSON := redactSubscriptionIDs(string(jsonData))
-	// Append a newline character
-	redactedJSON = redactedJSON + "\n"
-
-	err = os.WriteFile(filePath, []byte(redactedJSON), 0644)
-	if err != nil {
-		log.Fatalf("Failed to write JSON data to file %s: %v", filePath, err)
-	}
-
-	fmt.Printf("Successfully saved locations to %s\n", filePath)
-}
+// Append a newline character
 
 // redactSubscriptionIDs replaces subscription GUIDs in strings
 func redactSubscriptionIDs(jsonContent string) string {
+	_ = "STUB: not implemented"
 	// Regex pattern to match subscription GUIDs in paths
 	// Matches: /subscriptions/{GUID}/
-	subscriptionPattern := regexp.MustCompile(`/subscriptions/[0-9a-fA-F\-]+/`)
-
-	// Replace with redacted subscription ID
-	redacted := subscriptionPattern.ReplaceAllString(jsonContent, "/subscriptions/00000000-0000-0000-0000-000000000000/")
-
-	return redacted
+	return ""
 }
+
+// Replace with redacted subscription ID

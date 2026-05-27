@@ -17,8 +17,6 @@ limitations under the License.
 package utils
 
 import (
-	"fmt"
-
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -26,7 +24,6 @@ import (
 // NewTerminatingResourceError returns a NotFound error indicating that the resource is terminating.
 // This is useful for resources where termination should be treated as not found.
 func NewTerminatingResourceError(gr schema.GroupResource, name string) *errors.StatusError {
-	err := errors.NewNotFound(gr, name)
-	err.ErrStatus.Message = fmt.Sprintf("%s %q is terminating, treating as not found", gr.String(), name)
-	return err
+	_ = "STUB: not implemented"
+	return nil
 }

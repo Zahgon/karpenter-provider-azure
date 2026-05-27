@@ -33,14 +33,13 @@ type fakeBatchEntriesKey struct{}
 // inspect. This context key mirrors the same []MachineEntry data so that
 // in-process fakes can access it.
 func WithFakeBatchEntries(ctx context.Context, entries []MachineEntry) context.Context {
-	return context.WithValue(ctx, fakeBatchEntriesKey{}, entries)
+	_ = "STUB: not implemented"
+	return *new(context.Context)
 }
 
 // FakeBatchEntriesFromContext retrieves per-machine batch entries if present.
 // Only used by fakes/tests — see WithFakeBatchEntries.
 func FakeBatchEntriesFromContext(ctx context.Context) []MachineEntry {
-	if entries, ok := ctx.Value(fakeBatchEntriesKey{}).([]MachineEntry); ok {
-		return entries
-	}
+	_ = "STUB: not implemented"
 	return nil
 }

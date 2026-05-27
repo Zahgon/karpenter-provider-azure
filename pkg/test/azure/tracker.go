@@ -17,10 +17,7 @@ limitations under the License.
 package azure
 
 import (
-	"fmt"
 	"sync"
-
-	"golang.org/x/sync/errgroup"
 )
 
 type Cleanup func() error
@@ -33,36 +30,16 @@ type Tracker struct {
 	mu  sync.Mutex
 }
 
-func NewTracker() *Tracker {
-	return &Tracker{
-		ids: make(map[string]Cleanup),
-	}
-}
+func NewTracker() *Tracker { _ = "STUB: not implemented"; return nil }
 
-func (t *Tracker) Add(id string, cleanup Cleanup) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
+func (t *Tracker) Add(id string, cleanup Cleanup) { _ = "STUB: not implemented"; return }
 
-	// TODO: This isn't case-insensitive, but it probably should be
-	if t.ids[id] != nil {
-		return
-	}
-	t.ids[id] = cleanup
-}
+// TODO: This isn't case-insensitive, but it probably should be
 
 func (t *Tracker) Cleanup() error {
+	_ = "STUB: not implemented"
 	// We could avoid holding the lock across cleanup - we don't expect adds to happen during cleanup so for now not worrying about it
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	var g errgroup.Group
-	for id, c := range t.ids {
-		// TODO: Should be using the test logger
-		fmt.Printf("## Cleaning up Azure resource: %s\n", id)
-		g.Go(c)
-	}
-	if err := g.Wait(); err != nil {
-		return fmt.Errorf("cleanup errors: %w", err)
-	}
 	return nil
 }
+
+// TODO: Should be using the test logger

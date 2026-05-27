@@ -24,7 +24,6 @@ import (
 	"context"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
 )
 
 // GPUProfile g p u profile
@@ -41,28 +40,20 @@ type GPUProfile struct {
 
 // Validate validates this g p u profile
 func (m *GPUProfile) Validate(formats strfmt.Registry) error {
+	_ = "STUB: not implemented"
+
+	// ContextValidate validates this g p u profile based on context it is used
 	return nil
 }
 
-// ContextValidate validates this g p u profile based on context it is used
 func (m *GPUProfile) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	_ = "STUB: not implemented"
+
+	// MarshalBinary interface implementation
 	return nil
 }
 
-// MarshalBinary interface implementation
-func (m *GPUProfile) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
+func (m *GPUProfile) MarshalBinary() ([]byte, error) { _ = "STUB: not implemented"; return nil, nil }
 
 // UnmarshalBinary interface implementation
-func (m *GPUProfile) UnmarshalBinary(b []byte) error {
-	var res GPUProfile
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
+func (m *GPUProfile) UnmarshalBinary(b []byte) error { _ = "STUB: not implemented"; return nil }

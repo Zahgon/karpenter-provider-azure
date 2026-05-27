@@ -17,54 +17,39 @@ limitations under the License.
 package clientopts
 
 import (
-	"log/slog"
 	"net/http"
-	"os"
 
-	shPolicy "github.com/Azure/aks-middleware/http/client/azuresdk/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
-	"github.com/Azure/karpenter-provider-azure/pkg/auth"
 )
 
 func DefaultARMOpts(cloudConfig cloud.Configuration, enableLogging bool) *arm.ClientOptions {
-	opts := &arm.ClientOptions{}
-	opts.Telemetry = DefaultTelemetryOpts()
-	opts.Retry = DefaultRetryOpts()
-	opts.Transport = defaultHTTPClient
-	opts.Cloud = cloudConfig
-
-	if enableLogging {
-		logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-		opts.PerCallPolicies = append(opts.PerCallPolicies, shPolicy.NewLoggingPolicy(*logger))
-	}
-	return opts
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func DefaultRetryOpts() policy.RetryOptions {
-	return policy.RetryOptions{
-		// TODO: bsoghigian: Investigate if we want to leverage some of the status codes other than the defaults.
-		// the defaults are // StatusCodes specifies the HTTP status codes that indicate the operation should be retried.
-		// A nil slice will use the following values.
-		//   http.StatusRequestTimeout      408
-		//   http.StatusTooManyRequests     429
-		//   http.StatusInternalServerError 500
-		//   http.StatusBadGateway          502
-		//   http.StatusServiceUnavailable  503
-		//   http.StatusGatewayTimeout      504
-		// Specifying values will replace the default values.
-		// Specifying an empty slice will disable retries for HTTP status codes.
-		// StatusCodes: nil,
-	}
+	_ = "STUB: not implemented"
+	return *new(policy.RetryOptions)
 }
 
-func DefaultHTTPClient() *http.Client {
-	return defaultHTTPClient
-}
+// TODO: bsoghigian: Investigate if we want to leverage some of the status codes other than the defaults.
+// the defaults are // StatusCodes specifies the HTTP status codes that indicate the operation should be retried.
+// A nil slice will use the following values.
+//   http.StatusRequestTimeout      408
+//   http.StatusTooManyRequests     429
+//   http.StatusInternalServerError 500
+//   http.StatusBadGateway          502
+//   http.StatusServiceUnavailable  503
+//   http.StatusGatewayTimeout      504
+// Specifying values will replace the default values.
+// Specifying an empty slice will disable retries for HTTP status codes.
+// StatusCodes: nil,
+
+func DefaultHTTPClient() *http.Client { _ = "STUB: not implemented"; return nil }
 
 func DefaultTelemetryOpts() policy.TelemetryOptions {
-	return policy.TelemetryOptions{
-		ApplicationID: auth.GetUserAgentExtension(),
-	}
+	_ = "STUB: not implemented"
+	return *new(policy.TelemetryOptions)
 }

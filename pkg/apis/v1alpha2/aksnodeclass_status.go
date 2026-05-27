@@ -17,8 +17,6 @@ limitations under the License.
 package v1alpha2
 
 import (
-	"fmt"
-
 	"github.com/awslabs/operatorpkg/status"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -94,35 +92,21 @@ type AKSNodeClassStatus struct {
 }
 
 func (in *AKSNodeClass) StatusConditions() status.ConditionSet {
-	conds := []string{
-		ConditionTypeImagesReady,
-		ConditionTypeKubernetesVersionReady,
-		ConditionTypeSubnetsReady,
-		ConditionTypeLocalDNSReady,
-	}
-	return status.NewReadyConditions(conds...).For(in)
+	_ = "STUB: not implemented"
+	return *new(status.ConditionSet)
 }
 
-func (in *AKSNodeClass) GetConditions() []status.Condition {
-	return in.Status.Conditions
-}
+func (in *AKSNodeClass) GetConditions() []status.Condition { _ = "STUB: not implemented"; return nil }
 
 func (in *AKSNodeClass) SetConditions(conditions []status.Condition) {
-	in.Status.Conditions = conditions
+	_ = "STUB: not implemented"
+	return
 }
 
 // GetKubernetesVersion returns the Status.KubernetesVersion if its up to date and valid to use, otherwise returns an error.
 func (in *AKSNodeClass) GetKubernetesVersion() (string, error) {
-	err := in.validateKubernetesVersionReadiness()
-	if err != nil {
-		return "", err
-	}
-
-	if in.Status.KubernetesVersion == nil {
-		return "", nil
-	}
-
-	return *in.Status.KubernetesVersion, nil
+	_ = "STUB: not implemented"
+	return "", nil
 }
 
 // validateKubernetesVersionReadiness will return nil if the the KubernetesVersion is considered valid to use,
@@ -134,27 +118,14 @@ func (in *AKSNodeClass) GetKubernetesVersion() (string, error) {
 // - The Condition's ObservedGeneration is up to date with the latest Spec Generation
 // - The KubernetesVersion is initialized and non-empty
 func (in *AKSNodeClass) validateKubernetesVersionReadiness() error {
-	if in == nil {
-		return fmt.Errorf("NodeClass is nil, condition %s is not true", ConditionTypeKubernetesVersionReady)
-	}
-	kubernetesVersionCondition := in.StatusConditions().Get(ConditionTypeKubernetesVersionReady)
-	if kubernetesVersionCondition.IsFalse() || kubernetesVersionCondition.IsUnknown() {
-		return fmt.Errorf("NodeClass condition %s, is in Ready=%s, %s", ConditionTypeKubernetesVersionReady, kubernetesVersionCondition.GetStatus(), kubernetesVersionCondition.Message)
-	} else if kubernetesVersionCondition.ObservedGeneration != in.GetGeneration() {
-		return fmt.Errorf("NodeClass condition %s ObservedGeneration %d does not match the NodeClass Generation %d", ConditionTypeKubernetesVersionReady, kubernetesVersionCondition.ObservedGeneration, in.GetGeneration())
-	} else if in.Status.KubernetesVersion == nil || *in.Status.KubernetesVersion == "" {
-		return fmt.Errorf("NodeClass KubernetesVersion is uninitialized")
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 // GetImages returns the Status.Images if its up to date and valid to use, otherwise returns an error.
 func (in *AKSNodeClass) GetImages() ([]NodeImage, error) {
-	err := in.validateImagesReadiness()
-	if err != nil {
-		return []NodeImage{}, err
-	}
-	return in.Status.Images, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 // validateImagesReadiness will return nil if the the Images are considered valid to use,
@@ -164,15 +135,4 @@ func (in *AKSNodeClass) GetImages() ([]NodeImage, error) {
 // - The AKSNodeClass is non-nil
 // - The AKSNodeClass' ConditionTypeImagesReady Condition is true
 // - The Condition's ObservedGeneration is up to date with the latest Spec Generation
-func (in *AKSNodeClass) validateImagesReadiness() error {
-	if in == nil {
-		return fmt.Errorf("NodeClass is nil, condition %s is not true", ConditionTypeImagesReady)
-	}
-	imagesCondition := in.StatusConditions().Get(ConditionTypeImagesReady)
-	if imagesCondition.IsFalse() || imagesCondition.IsUnknown() {
-		return fmt.Errorf("NodeClass condition %s, is in Ready=%s, %s", ConditionTypeImagesReady, imagesCondition.GetStatus(), imagesCondition.Message)
-	} else if imagesCondition.ObservedGeneration != in.GetGeneration() {
-		return fmt.Errorf("NodeClass condition %s ObservedGeneration %d does not match the NodeClass Generation %d", ConditionTypeImagesReady, imagesCondition.ObservedGeneration, in.GetGeneration())
-	}
-	return nil
-}
+func (in *AKSNodeClass) validateImagesReadiness() error { _ = "STUB: not implemented"; return nil }

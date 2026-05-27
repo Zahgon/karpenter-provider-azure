@@ -22,13 +22,13 @@ package operations
 
 import (
 	"github.com/go-openapi/runtime"
-	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new operations API client.
 func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
-	return &Client{transport: transport, formats: formats}
+	_ = "STUB: not implemented"
+	return *new(ClientService)
 }
 
 // New creates a new operations API client with basic auth credentials.
@@ -39,9 +39,8 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientServi
 // - user: user for basic authentication header.
 // - password: password for basic authentication header.
 func NewClientWithBasicAuth(host, basePath, scheme, user, password string) ClientService {
-	transport := httptransport.New(host, basePath, []string{scheme})
-	transport.DefaultAuthentication = httptransport.BasicAuth(user, password)
-	return &Client{transport: transport, formats: strfmt.Default}
+	_ = "STUB: not implemented"
+	return *new(ClientService)
 }
 
 // New creates a new operations API client with a bearer token for authentication.
@@ -51,9 +50,8 @@ func NewClientWithBasicAuth(host, basePath, scheme, user, password string) Clien
 // - scheme: http scheme ("http", "https").
 // - bearerToken: bearer token for Bearer authentication header.
 func NewClientWithBearerToken(host, basePath, scheme, bearerToken string) ClientService {
-	transport := httptransport.New(host, basePath, []string{scheme})
-	transport.DefaultAuthentication = httptransport.BearerToken(bearerToken)
-	return &Client{transport: transport, formats: strfmt.Default}
+	_ = "STUB: not implemented"
+	return *new(ClientService)
 }
 
 /*
@@ -80,45 +78,16 @@ NodeBootstrappingGet gets node bootstrapping values for a specified provisioning
 Gets NodeBootstrapping values for a specified provisioning configuration, with secrets redacted.
 */
 func (a *Client) NodeBootstrappingGet(params *NodeBootstrappingGetParams, opts ...ClientOption) (*NodeBootstrappingGetOK, error) {
+	_ = "STUB: not implemented"
 	// NOTE: parameters are not validated before sending
-	if params == nil {
-		params = NewNodeBootstrappingGetParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "NodeBootstrapping_Get",
-		Method:             "GET",
-		PathPattern:        "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerService/managedclusters/{resourceName}/nodeBootstrapping",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"https"},
-		Params:             params,
-		Reader:             &NodeBootstrappingGetReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-
-	// only one success response has to be checked
-	success, ok := result.(*NodeBootstrappingGetOK)
-	if ok {
-		return success, nil
-	}
-
-	// unexpected success response.
-	//
-	// a default response is provided: fill this and return an error
-	unexpectedSuccess := result.(*NodeBootstrappingGetDefault)
-
-	return nil, runtime.NewAPIError("unexpected success response: content available as default response in error", unexpectedSuccess, unexpectedSuccess.Code())
+	return nil, nil
 }
+
+// only one success response has to be checked
+
+// unexpected success response.
+//
+// a default response is provided: fill this and return an error
 
 // SetTransport changes the transport on the client
-func (a *Client) SetTransport(transport runtime.ClientTransport) {
-	a.transport = transport
-}
+func (a *Client) SetTransport(transport runtime.ClientTransport) { _ = "STUB: not implemented"; return }

@@ -24,11 +24,8 @@ import (
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/imagefamily/customscriptsbootstrap"
 	types "github.com/Azure/karpenter-provider-azure/pkg/providers/imagefamily/types"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/launchtemplate/parameters"
-	"github.com/samber/lo"
 
-	karpv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 	"sigs.k8s.io/karpenter/pkg/cloudprovider"
-	"sigs.k8s.io/karpenter/pkg/scheduling"
 )
 
 const (
@@ -43,79 +40,17 @@ type AzureLinux struct {
 	Options *parameters.StaticParameters
 }
 
-func (u AzureLinux) Name() string {
-	return "AzureLinux2"
-}
+func (u AzureLinux) Name() string { _ = "STUB: not implemented"; return "" }
 
 func (u AzureLinux) DefaultImages(useSIG bool, fipsMode *v1beta1.FIPSMode) []types.DefaultImageOutput {
-	if lo.FromPtr(fipsMode) == v1beta1.FIPSModeFIPS {
-		// Note: FIPS images aren't supported in public galleries, only shared image galleries
-		// image provider will select these images in order, first match wins
-		if !useSIG {
-			return []types.DefaultImageOutput{}
-		}
-		return []types.DefaultImageOutput{
-			{
-				PublicGalleryURL:     AKSAzureLinuxPublicGalleryURL,
-				GalleryResourceGroup: AKSAzureLinuxResourceGroup,
-				GalleryName:          AKSAzureLinuxGalleryName,
-				ImageDefinition:      AzureLinux2Gen2FIPSImageDefinition,
-				Requirements: scheduling.NewRequirements(
-					scheduling.NewRequirement(v1.LabelArchStable, v1.NodeSelectorOpIn, karpv1.ArchitectureAmd64),
-					scheduling.NewRequirement(v1beta1.LabelSKUHyperVGeneration, v1.NodeSelectorOpIn, v1beta1.HyperVGenerationV2),
-				),
-				Distro: "aks-azurelinux-v2-gen2-fips",
-			},
-			{
-				PublicGalleryURL:     AKSAzureLinuxPublicGalleryURL,
-				GalleryResourceGroup: AKSAzureLinuxResourceGroup,
-				GalleryName:          AKSAzureLinuxGalleryName,
-				ImageDefinition:      AzureLinux2Gen1FIPSImageDefinition,
-				Requirements: scheduling.NewRequirements(
-					scheduling.NewRequirement(v1.LabelArchStable, v1.NodeSelectorOpIn, karpv1.ArchitectureAmd64),
-					scheduling.NewRequirement(v1beta1.LabelSKUHyperVGeneration, v1.NodeSelectorOpIn, v1beta1.HyperVGenerationV1),
-				),
-				Distro: "aks-azurelinux-v2-fips",
-			},
-		}
-	}
-	// image provider will select these images in order, first match wins. This is why we chose to put Gen2 first in the defaultImages, as we prefer gen2 over gen1
-	return []types.DefaultImageOutput{
-		{
-			PublicGalleryURL:     AKSAzureLinuxPublicGalleryURL,
-			GalleryResourceGroup: AKSAzureLinuxResourceGroup,
-			GalleryName:          AKSAzureLinuxGalleryName,
-			ImageDefinition:      AzureLinuxGen2ImageDefinition,
-			Requirements: scheduling.NewRequirements(
-				scheduling.NewRequirement(v1.LabelArchStable, v1.NodeSelectorOpIn, karpv1.ArchitectureAmd64),
-				scheduling.NewRequirement(v1beta1.LabelSKUHyperVGeneration, v1.NodeSelectorOpIn, v1beta1.HyperVGenerationV2),
-			),
-			Distro: "aks-azurelinux-v2-gen2",
-		},
-		{
-			PublicGalleryURL:     AKSAzureLinuxPublicGalleryURL,
-			GalleryResourceGroup: AKSAzureLinuxResourceGroup,
-			GalleryName:          AKSAzureLinuxGalleryName,
-			ImageDefinition:      AzureLinuxGen1ImageDefinition,
-			Requirements: scheduling.NewRequirements(
-				scheduling.NewRequirement(v1.LabelArchStable, v1.NodeSelectorOpIn, karpv1.ArchitectureAmd64),
-				scheduling.NewRequirement(v1beta1.LabelSKUHyperVGeneration, v1.NodeSelectorOpIn, v1beta1.HyperVGenerationV1),
-			),
-			Distro: "aks-azurelinux-v2",
-		},
-		{
-			PublicGalleryURL:     AKSAzureLinuxPublicGalleryURL,
-			GalleryResourceGroup: AKSAzureLinuxResourceGroup,
-			GalleryName:          AKSAzureLinuxGalleryName,
-			ImageDefinition:      AzureLinuxGen2ArmImageDefinition,
-			Requirements: scheduling.NewRequirements(
-				scheduling.NewRequirement(v1.LabelArchStable, v1.NodeSelectorOpIn, karpv1.ArchitectureArm64),
-				scheduling.NewRequirement(v1beta1.LabelSKUHyperVGeneration, v1.NodeSelectorOpIn, v1beta1.HyperVGenerationV2),
-			),
-			Distro: "aks-azurelinux-v2-arm64-gen2",
-		},
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
+
+// Note: FIPS images aren't supported in public galleries, only shared image galleries
+// image provider will select these images in order, first match wins
+
+// image provider will select these images in order, first match wins. This is why we chose to put Gen2 first in the defaultImages, as we prefer gen2 over gen1
 
 // UserData returns the default userdata script for the image Family
 func (u AzureLinux) ScriptlessCustomData(
@@ -125,35 +60,8 @@ func (u AzureLinux) ScriptlessCustomData(
 	caBundle *string,
 	_ *cloudprovider.InstanceType,
 ) bootstrap.Bootstrapper {
-	return bootstrap.AKS{
-		Options: bootstrap.Options{
-			ClusterName:                  u.Options.ClusterName,
-			ClusterEndpoint:              u.Options.ClusterEndpoint,
-			KubeletConfig:                kubeletConfig,
-			Taints:                       taints,
-			Labels:                       labels,
-			CABundle:                     caBundle,
-			GPUNode:                      u.Options.GPUNode,
-			GPUDriverVersion:             u.Options.GPUDriverVersion,
-			GPUDriverType:                u.Options.GPUDriverType,
-			GPUImageSHA:                  u.Options.GPUImageSHA,
-			GPUDriverInstallationEnabled: u.Options.GPUDriverInstallationEnabled,
-			SubnetID:                     u.Options.SubnetID,
-		},
-		Arch:                           u.Options.Arch,
-		TenantID:                       u.Options.TenantID,
-		SubscriptionID:                 u.Options.SubscriptionID,
-		Location:                       u.Options.Location,
-		KubeletIdentityClientID:        u.Options.KubeletIdentityClientID,
-		ResourceGroup:                  u.Options.ResourceGroup,
-		NetworkSecurityGroupName:       u.Options.NetworkSecurityGroupName,
-		RouteTableName:                 u.Options.RouteTableName,
-		APIServerName:                  u.Options.APIServerName,
-		KubeletClientTLSBootstrapToken: u.Options.KubeletClientTLSBootstrapToken,
-		NetworkPlugin:                  u.Options.NetworkPlugin,
-		NetworkPolicy:                  u.Options.NetworkPolicy,
-		KubernetesVersion:              u.Options.KubernetesVersion,
-	}
+	_ = "STUB: not implemented"
+	return *new(bootstrap.Bootstrapper)
 }
 
 // UserData returns the default userdata script for the image Family
@@ -171,28 +79,6 @@ func (u AzureLinux) CustomScriptsNodeBootstrapping(
 	artifactStreaming *v1beta1.ArtifactStreaming,
 	linuxOSConfig *v1beta1.LinuxOSConfiguration,
 ) customscriptsbootstrap.Bootstrapper {
-	return customscriptsbootstrap.ProvisionClientBootstrap{
-		ClusterName:                    u.Options.ClusterName,
-		KubeletConfig:                  kubeletConfig,
-		Taints:                         taints,
-		StartupTaints:                  startupTaints,
-		Labels:                         labels,
-		SubnetID:                       u.Options.SubnetID,
-		Arch:                           u.Options.Arch,
-		SubscriptionID:                 u.Options.SubscriptionID,
-		ResourceGroup:                  u.Options.ResourceGroup,
-		KubeletClientTLSBootstrapToken: u.Options.KubeletClientTLSBootstrapToken,
-		KubernetesVersion:              u.Options.KubernetesVersion,
-		ImageDistro:                    imageDistro,
-		InstanceType:                   instanceType,
-		StorageProfile:                 storageProfile,
-		ClusterResourceGroup:           u.Options.ClusterResourceGroup,
-		GPUDriverInstallationEnabled:   u.Options.GPUDriverInstallationEnabled,
-		NodeBootstrappingProvider:      nodeBootstrappingClient,
-		OSSKU:                          customscriptsbootstrap.ImageFamilyOSSKUAzureLinux2,
-		FIPSMode:                       fipsMode,
-		LocalDNSProfile:                localDNS,
-		ArtifactStreaming:              artifactStreaming,
-		LinuxOSConfig:                  linuxOSConfig,
-	}
+	_ = "STUB: not implemented"
+	return *new(customscriptsbootstrap.Bootstrapper)
 }

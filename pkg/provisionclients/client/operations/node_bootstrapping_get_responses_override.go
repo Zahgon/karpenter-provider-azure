@@ -17,31 +17,21 @@ limitations under the License.
 package operations
 
 import (
-	"io"
-
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 )
 
 func (o *NodeBootstrappingGetDefault) readResponse(response runtime.ClientResponse, _ runtime.Consumer, _ strfmt.Registry) error {
+	_ = "STUB: not implemented"
 	// response payload
+	return nil
 
 	// THIS IS MODIFIED FROM AUTO-GENERATED.
 	// There is a known issue on the server side where content type in the header (JSON) doesn't match actual (text).
 	// This is a work around for that, which should be safe due to the fact that string > JSON. Only affect logging format for now.
 	// The "consumer" that we replaced only decode into JSON, and unlikely to change.
-	rc := response.Body()
-	defer rc.Close()
-
-	bytes, err := io.ReadAll(rc)
-	if err != nil {
-		return err
-	}
-	o.Payload = string(bytes)
-
-	// if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
-	// return err
-	// }
-
-	return nil
 }
+
+// if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
+// return err
+// }

@@ -18,15 +18,8 @@ package client
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
-	"net/url"
-	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
-	"github.com/Azure/karpenter-provider-azure/pkg/auth"
 )
 
 const (
@@ -42,52 +35,11 @@ type pricingAPI struct {
 	cloud cloud.Configuration
 }
 
-func New(cloud cloud.Configuration) PricingAPI {
-	return &pricingAPI{cloud: cloud}
-}
+func New(cloud cloud.Configuration) PricingAPI { _ = "STUB: not implemented"; return *new(PricingAPI) }
 
 func (papi *pricingAPI) GetProductsPricePages(_ context.Context, filters []*Filter, pageHandler func(output *ProductsPricePage)) error {
-	nextURL := pricingURL
-
-	if !auth.IsPublic(papi.cloud) {
-		// If the cloud is not Azure Public, the pricing API isn't supported and we return an error
-		return fmt.Errorf("pricing API is not supported in non-public clouds")
-	}
-
-	if len(filters) > 0 {
-		filterParams := []string{}
-		for _, filter := range filters {
-			filterParams = append(filterParams, filter.String())
-		}
-
-		filterParamsEscaped := url.QueryEscape(strings.Join(filterParams[:], " and "))
-
-		nextURL += fmt.Sprintf("&$filter=%s", filterParamsEscaped)
-	}
-
-	for nextURL != "" {
-		res, err := http.Get(nextURL)
-		if err != nil {
-			return err
-		}
-
-		if res.StatusCode != 200 {
-			return fmt.Errorf("got a non-200 status code: %d", res.StatusCode)
-		}
-
-		resBody, err := io.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-
-		page := ProductsPricePage{}
-		err = json.Unmarshal(resBody, &page)
-		if err != nil {
-			return err
-		}
-
-		pageHandler(&page)
-		nextURL = page.NextPageLink
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// If the cloud is not Azure Public, the pricing API isn't supported and we return an error

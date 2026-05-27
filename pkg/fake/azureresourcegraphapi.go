@@ -18,16 +18,11 @@ package fake
 
 import (
 	"context"
-	"encoding/json"
-
-	"github.com/samber/lo"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v7"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/azclient/azapi"
-	"github.com/Azure/karpenter-provider-azure/pkg/providers/instance"
-	"github.com/Azure/karpenter-provider-azure/pkg/providers/launchtemplate"
 )
 
 type AzureResourceGraphResourcesInput struct {
@@ -52,80 +47,31 @@ type AzureResourceGraphAPI struct {
 }
 
 func NewAzureResourceGraphAPI(resourceGroup string, virtualMachinesAPI *VirtualMachinesAPI, networkInterfacesAPI *NetworkInterfacesAPI) *AzureResourceGraphAPI {
-	return &AzureResourceGraphAPI{
-		vmListQuery:  instance.GetVMListQueryBuilder(resourceGroup).String(),
-		nicListQuery: instance.GetNICListQueryBuilder(resourceGroup).String(),
-		AzureResourceGraphBehavior: AzureResourceGraphBehavior{
-			VirtualMachinesAPI:   virtualMachinesAPI,
-			NetworkInterfacesAPI: networkInterfacesAPI,
-			ResourceGroup:        resourceGroup,
-		},
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // Reset must be called between tests otherwise tests will pollute each other.
-func (c *AzureResourceGraphAPI) Reset() {}
+func (c *AzureResourceGraphAPI) Reset() { _ = "STUB: not implemented"; return }
 
 func (c *AzureResourceGraphAPI) Resources(_ context.Context, query armresourcegraph.QueryRequest, options *armresourcegraph.ClientResourcesOptions) (armresourcegraph.ClientResourcesResponse, error) {
-	input := &AzureResourceGraphResourcesInput{
-		Query:   query,
-		Options: options,
-	}
-	resourceList := c.getResourceList(*query.Query)
-
-	return c.AzureResourceGraphResourcesBehavior.Invoke(input, func(input *AzureResourceGraphResourcesInput) (armresourcegraph.ClientResourcesResponse, error) {
-		return armresourcegraph.ClientResourcesResponse{
-			QueryResponse: armresourcegraph.QueryResponse{
-				Data: resourceList,
-			},
-		}, nil
-	})
+	_ = "STUB: not implemented"
+	return *new(armresourcegraph.ClientResourcesResponse), nil
 }
 
 func (c *AzureResourceGraphAPI) getResourceList(query string) []interface{} {
-	switch query {
-	case c.vmListQuery:
-		vmList := lo.Filter(c.loadVMObjects(), func(vm armcompute.VirtualMachine, _ int) bool {
-			return vm.Tags != nil && vm.Tags[launchtemplate.NodePoolTagKey] != nil &&
-				vm.Tags[launchtemplate.KarpenterAKSMachineNodeClaimTagKey] == nil
-		})
-		resourceList := lo.Map(vmList, func(vm armcompute.VirtualMachine, _ int) interface{} {
-			b, _ := json.Marshal(vm)
-			return convertBytesToInterface(b)
-		})
-		return resourceList
-	case c.nicListQuery:
-		nicList := lo.Filter(c.loadNicObjects(), func(nic armnetwork.Interface, _ int) bool {
-			return nic.Tags != nil && nic.Tags[launchtemplate.NodePoolTagKey] != nil &&
-				nic.Tags[launchtemplate.KarpenterAKSMachineNodeClaimTagKey] == nil
-		})
-		resourceList := lo.Map(nicList, func(nic armnetwork.Interface, _ int) interface{} {
-			b, _ := json.Marshal(nic)
-			return convertBytesToInterface(b)
-		})
-		return resourceList
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (c *AzureResourceGraphAPI) loadVMObjects() (vmList []armcompute.VirtualMachine) {
-	c.VirtualMachinesAPI.Instances.Range(func(k string, v armcompute.VirtualMachine) bool {
-		vmList = append(vmList, v)
-		return true
-	})
-	return vmList
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func (c *AzureResourceGraphAPI) loadNicObjects() (nicList []armnetwork.Interface) {
-	c.NetworkInterfacesAPI.NetworkInterfaces.Range(func(k string, v armnetwork.Interface) bool {
-		nicList = append(nicList, v)
-		return true
-	})
-	return nicList
+	_ = "STUB: not implemented"
+	return nil
 }
 
-func convertBytesToInterface(b []byte) interface{} {
-	jsonObj := instance.Resource{}
-	_ = json.Unmarshal(b, &jsonObj)
-	return interface{}(jsonObj)
-}
+func convertBytesToInterface(b []byte) interface{} { _ = "STUB: not implemented"; return nil }

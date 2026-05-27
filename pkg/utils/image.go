@@ -17,9 +17,7 @@ limitations under the License.
 package utils
 
 import (
-	"fmt"
 	"regexp"
-	"strings"
 )
 
 var (
@@ -28,33 +26,22 @@ var (
 
 // WARNING: not supporting CIG images yet.
 func GetAKSMachineNodeImageVersionFromImageID(imageID string) (string, error) {
-	if strings.HasPrefix(imageID, "/CommunityGalleries") {
-		// Requires AKS machine API support
-		return "", fmt.Errorf("CIG images are not supported yet for AKS machines, consider not using an AKS Machine API provision mode: %s", imageID)
-	} else {
-		return GetAKSMachineNodeImageVersionFromSIGImageID(imageID)
-	}
+	_ = "STUB: not implemented"
+	return "", nil
 }
+
+// Requires AKS machine API support
 
 // Convert from "/subscriptions/10945678-1234-1234-1234-123456789012/resourceGroups/AKS-Ubuntu/providers/Microsoft.Compute/galleries/AKSUbuntu/images/2204gen2containerd/versions/2022.10.03"
 // to "AKSUbuntu-2204gen2containerd-2022.10.03".
 func GetAKSMachineNodeImageVersionFromSIGImageID(imageID string) (string, error) {
-	matches := sigImageIDRegex.FindStringSubmatch(imageID)
-	if matches == nil {
-		return "", fmt.Errorf("incorrect SIG image ID id=%s", imageID)
-	}
-
-	// subscriptionID := matches[1]
-	// resourceGroup := matches[2]
-	gallery := matches[3]
-	definition := matches[4]
-	version := matches[5]
-
-	prefix := gallery
-	osVersion := definition
-	// if strings.Contains(prefix, windowsPrefix) {		// TODO(Windows)
-	// 	osVersion = extractOsVersionForWindows(definition)
-	// }
-
-	return strings.Join([]string{prefix, osVersion, version}, "-"), nil
+	_ = "STUB: not implemented"
+	return "", nil
 }
+
+// subscriptionID := matches[1]
+// resourceGroup := matches[2]
+
+// if strings.Contains(prefix, windowsPrefix) {		// TODO(Windows)
+// 	osVersion = extractOsVersionForWindows(definition)
+// }

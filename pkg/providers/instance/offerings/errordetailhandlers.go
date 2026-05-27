@@ -19,7 +19,6 @@ package offerings
 import (
 	"context"
 
-	sdkerrors "github.com/Azure/azure-sdk-for-go-extensions/pkg/errors"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v9"
 	"github.com/Azure/karpenter-provider-azure/pkg/cache"
 	"github.com/Azure/skewer"
@@ -43,63 +42,16 @@ type ErrorDetailHandler struct {
 // VM instance is still using ResponseErrorHandler.
 // Ideally, if AKS machine data model returns azcore.ResponseError, we don't need this split at all.
 func NewErrorDetailHandler(unavailableOfferings *cache.UnavailableOfferings) *ErrorDetailHandler {
-	return &ErrorDetailHandler{
-		UnavailableOfferings: unavailableOfferings,
-		HandlerEntries: []errorDetailHandlerEntry{
-			{
-				match:  sdkerrors.LowPriorityQuotaHasBeenReachedInErrorDetail,
-				handle: handleLowPriorityQuotaError,
-			},
-			{
-				match:  sdkerrors.SKUFamilyQuotaHasBeenReachedInErrorDetail,
-				handle: handleSKUFamilyQuotaError,
-			},
-			{
-				match:  sdkerrors.IsSKUNotAvailableInErrorDetail,
-				handle: handleSKUNotAvailableError,
-			},
-			{
-				match:  sdkerrors.ZonalAllocationFailureOccurredInErrorDetail,
-				handle: handleZonalAllocationFailureError,
-			},
-			{
-				match:  sdkerrors.AllocationFailureOccurredInErrorDetail,
-				handle: handleAllocationFailureError,
-			},
-			{
-				match:  sdkerrors.OverconstrainedZonalAllocationFailureOccurredInErrorDetail,
-				handle: handleOverconstrainedZonalAllocationFailureError,
-			},
-			{
-				match:  sdkerrors.OverconstrainedAllocationFailureOccurredInErrorDetail,
-				handle: handleOverconstrainedAllocationFailureError,
-			},
-			{
-				match:  sdkerrors.RegionalQuotaHasBeenReachedInErrorDetail,
-				handle: handleRegionalQuotaError,
-			},
-		},
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func (h *ErrorDetailHandler) extractErrorCodeAndMessage(errorDetail armcontainerservice.ErrorDetail) (string, string) {
-	var code, message string
-	if errorDetail.Code != nil {
-		code = *errorDetail.Code
-	}
-	if errorDetail.Message != nil {
-		message = *errorDetail.Message
-	}
-	return code, message
+	_ = "STUB: not implemented"
+	return "", ""
 }
 
 func (h *ErrorDetailHandler) Handle(ctx context.Context, sku *skewer.SKU, instanceType *corecloudprovider.InstanceType, zone, capacityType string, errorDetail armcontainerservice.ErrorDetail) error {
-	for _, handler := range h.HandlerEntries {
-		if handler.match(errorDetail) {
-			errorCode, errorMessage := h.extractErrorCodeAndMessage(errorDetail)
-			return handler.handle(ctx, h.UnavailableOfferings, sku, instanceType, zone, capacityType, errorCode, errorMessage)
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }

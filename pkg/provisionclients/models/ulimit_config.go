@@ -24,7 +24,6 @@ import (
 	"context"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
 )
 
 // UlimitConfig ulimit config
@@ -41,28 +40,20 @@ type UlimitConfig struct {
 
 // Validate validates this ulimit config
 func (m *UlimitConfig) Validate(formats strfmt.Registry) error {
+	_ = "STUB: not implemented"
+
+	// ContextValidate validates this ulimit config based on context it is used
 	return nil
 }
 
-// ContextValidate validates this ulimit config based on context it is used
 func (m *UlimitConfig) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	_ = "STUB: not implemented"
+
+	// MarshalBinary interface implementation
 	return nil
 }
 
-// MarshalBinary interface implementation
-func (m *UlimitConfig) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
+func (m *UlimitConfig) MarshalBinary() ([]byte, error) { _ = "STUB: not implemented"; return nil, nil }
 
 // UnmarshalBinary interface implementation
-func (m *UlimitConfig) UnmarshalBinary(b []byte) error {
-	var res UlimitConfig
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
+func (m *UlimitConfig) UnmarshalBinary(b []byte) error { _ = "STUB: not implemented"; return nil }

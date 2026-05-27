@@ -22,11 +22,8 @@ package models
 
 import (
 	"context"
-	stderrors "errors"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
 )
 
 // SigImageConfig sig image config
@@ -43,94 +40,35 @@ type SigImageConfig struct {
 
 // Validate validates this sig image config
 func (m *SigImageConfig) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateSigImageConfigTemplate(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *SigImageConfig) validateSigImageConfigTemplate(formats strfmt.Registry) error {
-	if swag.IsZero(m.SigImageConfigTemplate) { // not required
-		return nil
-	}
-
-	if m.SigImageConfigTemplate != nil {
-		if err := m.SigImageConfigTemplate.Validate(formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("sigImageConfigTemplate")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("sigImageConfigTemplate")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
+// not required
+
 // ContextValidate validate this sig image config based on the context it is used
 func (m *SigImageConfig) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.contextValidateSigImageConfigTemplate(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *SigImageConfig) contextValidateSigImageConfigTemplate(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.SigImageConfigTemplate != nil {
-
-		if swag.IsZero(m.SigImageConfigTemplate) { // not required
-			return nil
-		}
-
-		if err := m.SigImageConfigTemplate.ContextValidate(ctx, formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("sigImageConfigTemplate")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("sigImageConfigTemplate")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
 
 // MarshalBinary interface implementation
 func (m *SigImageConfig) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 // UnmarshalBinary interface implementation
-func (m *SigImageConfig) UnmarshalBinary(b []byte) error {
-	var res SigImageConfig
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
+func (m *SigImageConfig) UnmarshalBinary(b []byte) error { _ = "STUB: not implemented"; return nil }

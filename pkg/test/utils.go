@@ -16,11 +16,6 @@ limitations under the License.
 
 package test
 
-import (
-	"github.com/samber/lo"
-	k8srand "k8s.io/apimachinery/pkg/util/rand"
-)
-
 const (
 	// Note (charliedmcb): this already exists in test/pkg/environment/common
 	// https://github.com/Azure/karpenter-provider-azure/blob/84e449787ec72268efb0c7af81ec87a6b3ee95fa/test/pkg/environment/common/setup.go#L47
@@ -30,21 +25,14 @@ const (
 
 // RandomName returns a pseudo-random resource name with a given prefix.
 func RandomName(prefix string) string {
+	_ = "STUB: not implemented"
 	// You could make this more robust by including additional random characters.
-	return prefix + "-" + k8srand.String(10)
+	return ""
 }
 
-func ManagedTags(nodepoolName string) map[string]*string {
-	return map[string]*string{
-		"karpenter.azure.com_cluster": lo.ToPtr("test-cluster"),
-		"karpenter.sh_nodepool":       lo.ToPtr(nodepoolName),
-	}
-}
+func ManagedTags(nodepoolName string) map[string]*string { _ = "STUB: not implemented"; return nil }
 
 func ManagedTagsAKSMachine(nodepoolName string, nodeClaimName string) map[string]*string {
-	return map[string]*string{
-		"karpenter.azure.com_cluster":              lo.ToPtr("test-cluster"),
-		"karpenter.sh_nodepool":                    lo.ToPtr(nodepoolName),
-		"karpenter.azure.com_aksmachine_nodeclaim": lo.ToPtr(nodeClaimName),
-	}
+	_ = "STUB: not implemented"
+	return nil
 }

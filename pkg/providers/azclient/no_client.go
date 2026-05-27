@@ -40,42 +40,44 @@ var _ azapi.AKSMachinesAPI = (*noAKSMachinesClient)(nil)
 type noAKSMachinesClient struct{}
 
 func NewNoAKSMachinesClient() azapi.AKSMachinesAPI {
-	return &noAKSMachinesClient{}
+	_ = "STUB: not implemented"
+	return *new(azapi.AKSMachinesAPI)
 }
 
 func (d *noAKSMachinesClient) BeginCreateOrUpdate(ctx context.Context, resourceGroupName string, resourceName string, agentPoolName string, aksMachineName string, parameters armcontainerservice.Machine, options *armcontainerservice.MachinesClientBeginCreateOrUpdateOptions) (*runtime.Poller[armcontainerservice.MachinesClientCreateOrUpdateResponse], error) {
+	_ = "STUB: not implemented"
 	// As if agent pool is not found
-	return nil, agentPoolNotFoundRespError
+	return nil, nil
 }
 
 func (d *noAKSMachinesClient) Get(ctx context.Context, resourceGroupName string, resourceName string, agentPoolName string, aksMachineName string, options *armcontainerservice.MachinesClientGetOptions) (armcontainerservice.MachinesClientGetResponse, error) {
+	_ = "STUB: not implemented"
 	// As if agent pool is not found
-	return armcontainerservice.MachinesClientGetResponse{}, agentPoolNotFoundRespError
+	return *new(armcontainerservice.MachinesClientGetResponse), nil
 }
 
 func (d *noAKSMachinesClient) NewListPager(resourceGroupName string, resourceName string, agentPoolName string, options *armcontainerservice.MachinesClientListOptions) *runtime.Pager[armcontainerservice.MachinesClientListResponse] {
+	_ = "STUB: not implemented"
 	// As if agent pool is not found
-	return runtime.NewPager(runtime.PagingHandler[armcontainerservice.MachinesClientListResponse]{
-		More: func(armcontainerservice.MachinesClientListResponse) bool { return false },
-		Fetcher: func(context.Context, *armcontainerservice.MachinesClientListResponse) (armcontainerservice.MachinesClientListResponse, error) {
-			return armcontainerservice.MachinesClientListResponse{}, agentPoolNotFoundRespError
-		},
-	})
+	return nil
 }
 
 type noAKSAgentPoolsClient struct{}
 
 // NewNoAKSAgentPoolsClient creates a new dry AKS agent pools client, attempting to create real client internally
 func NewNoAKSAgentPoolsClient() azapi.AKSAgentPoolsAPI {
-	return &noAKSAgentPoolsClient{}
+	_ = "STUB: not implemented"
+	return *new(azapi.AKSAgentPoolsAPI)
 }
 
 func (d *noAKSAgentPoolsClient) Get(ctx context.Context, resourceGroupName string, resourceName string, agentPoolName string, options *armcontainerservice.AgentPoolsClientGetOptions) (armcontainerservice.AgentPoolsClientGetResponse, error) {
+	_ = "STUB: not implemented"
 	// As if agent pool is not found
-	return armcontainerservice.AgentPoolsClientGetResponse{}, agentPoolNotFoundRespError
+	return *new(armcontainerservice.AgentPoolsClientGetResponse), nil
 }
 
 func (d *noAKSAgentPoolsClient) BeginDeleteMachines(ctx context.Context, resourceGroupName string, resourceName string, agentPoolName string, aksMachines armcontainerservice.AgentPoolDeleteMachinesParameter, options *armcontainerservice.AgentPoolsClientBeginDeleteMachinesOptions) (*runtime.Poller[armcontainerservice.AgentPoolsClientDeleteMachinesResponse], error) {
+	_ = "STUB: not implemented"
 	// As if agent pool is not found
-	return nil, agentPoolNotFoundRespError
+	return nil, nil
 }

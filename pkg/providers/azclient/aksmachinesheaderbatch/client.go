@@ -54,17 +54,8 @@ type Client struct {
 }
 
 func NewClient(ctx context.Context, aksMachinesClient AKSMachinesCreateAPI, opts batcher.Options) *Client {
-	exec := newExecutor(aksMachinesClient)
-
-	b := batcher.New[aksMachineCreatePayload, *offerings.HandlableError](
-		ctx,
-		determineBatchKey,
-		exec.executeBatch,
-		opts,
-	)
-	b.Start()
-
-	return &Client{b: b}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // BeginCreateWithBatch submits a single machine creation into the batch system.
@@ -77,24 +68,10 @@ func (c *Client) BeginCreateWithBatch(
 	machineName string,
 	machine *armcontainerservice.Machine,
 ) (*offerings.HandlableError, error) {
-	responseChan, err := c.b.Enqueue(aksMachineCreatePayload{
-		resourceGroupName: resourceGroupName,
-		resourceName:      resourceName,
-		agentPoolName:     agentPoolName,
-		machineName:       machineName,
-		machineBody:       machine,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	select {
-	case response := <-responseChan:
-		return response.Payload, response.Err
-	case <-ctx.Done():
-		// WARNING: canceling context does not cancel Enqueue call and batch execution.
-		// It only prevents the caller from waiting for the response. Created resources may still exist, but will be garbage collected as they don't have NodeClaim.
-		// Suggestion: add canceling mechanism? But may not worth working on?
-		return nil, ctx.Err()
-	}
+	_ = "STUB: not implemented"
+	return nil, nil
 }
+
+// WARNING: canceling context does not cancel Enqueue call and batch execution.
+// It only prevents the caller from waiting for the response. Created resources may still exist, but will be garbage collected as they don't have NodeClaim.
+// Suggestion: add canceling mechanism? But may not worth working on?

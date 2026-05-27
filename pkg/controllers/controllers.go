@@ -20,7 +20,6 @@ import (
 	"context"
 
 	"github.com/awslabs/operatorpkg/controller"
-	"github.com/awslabs/operatorpkg/status"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
@@ -31,14 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/Azure/karpenter-provider-azure/pkg/apis/v1beta1"
-	nodeclaimgarbagecollection "github.com/Azure/karpenter-provider-azure/pkg/controllers/nodeclaim/garbagecollection"
-	nodeclasshash "github.com/Azure/karpenter-provider-azure/pkg/controllers/nodeclass/hash"
-	nodeclassstatus "github.com/Azure/karpenter-provider-azure/pkg/controllers/nodeclass/status"
-	nodeclasstermination "github.com/Azure/karpenter-provider-azure/pkg/controllers/nodeclass/termination"
 
-	instancetypecontroller "github.com/Azure/karpenter-provider-azure/pkg/controllers/instancetype"
-	"github.com/Azure/karpenter-provider-azure/pkg/controllers/nodeclaim/inplaceupdate"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/azclient/azapi"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/imagefamily"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/instance"
@@ -66,19 +58,8 @@ func NewControllers(
 	networkPolicy string,
 	networkPlugin string,
 ) []controller.Controller {
-	controllers := []controller.Controller{
-		nodeclasshash.NewController(kubeClient),
-		nodeclassstatus.NewController(kubeClient, kubernetesVersionProvider, nodeImageProvider, inClusterKubernetesInterface, managedKubernetesInterface, managedDynamicInterface, subnetsClient, diskEncryptionSetsClient, parsedDiskEncryptionSetID, networkPolicy, networkPlugin),
-		nodeclasstermination.NewController(kubeClient, recorder),
-
-		nodeclaimgarbagecollection.NewInstance(kubeClient, cloudProvider),
-		nodeclaimgarbagecollection.NewNetworkInterface(kubeClient, vmInstanceProvider),
-
-		// TODO: nodeclaim tagging
-		inplaceupdate.NewController(kubeClient, vmInstanceProvider, aksMachineInstanceProvider),
-		status.NewController[*v1beta1.AKSNodeClass](kubeClient, mgr.GetEventRecorderFor("karpenter")),
-
-		instancetypecontroller.NewController(instanceTypesProvider),
-	}
-	return controllers
+	_ = "STUB: not implemented"
+	return nil
 }
+
+// TODO: nodeclaim tagging

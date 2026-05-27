@@ -17,15 +17,11 @@ limitations under the License.
 package auth
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type AuxiliaryTokenServer interface {
@@ -44,75 +40,27 @@ type AuxiliaryTokenPolicy struct {
 	lock   sync.Mutex
 }
 
-func (p *AuxiliaryTokenPolicy) GetAuxiliaryToken() error {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-	// If the token is uninitialized or close to expiration, fetch a new one
-	currentTime := time.Now()
-	if p.Token.ExpiresOn.IsZero() || p.Token.RefreshOn.Before(currentTime) || p.Token.ExpiresOn.Before(currentTime.Add(5*time.Minute)) {
-		newToken, err := getAuxiliaryToken(p.client, p.url, p.scope)
-		if err != nil {
-			return err
-		}
-		p.Token = newToken
-	}
-	return nil
-}
+func (p *AuxiliaryTokenPolicy) GetAuxiliaryToken() error { _ = "STUB: not implemented"; return nil }
+
+// If the token is uninitialized or close to expiration, fetch a new one
 
 func (p *AuxiliaryTokenPolicy) Do(req *policy.Request) (*http.Response, error) {
-	err := p.GetAuxiliaryToken()
-	if err != nil {
-		log.FromContext(req.Raw().Context()).Error(err, "Failed to get auxiliary token")
-		return nil, err
-	}
-	req.Raw().Header.Add("x-ms-authorization-auxiliary", "Bearer "+p.Token.Token)
-	return req.Next()
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 func NewAuxiliaryTokenPolicy(client AuxiliaryTokenServer, url string, scope string) *AuxiliaryTokenPolicy {
-	auxPolicy := AuxiliaryTokenPolicy{
-		Token:  azcore.AccessToken{},
-		url:    url,
-		scope:  scope,
-		client: client,
-		lock:   sync.Mutex{},
-	}
-	return &auxPolicy
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func getAuxiliaryToken(client AuxiliaryTokenServer, url string, scope string) (azcore.AccessToken, error) {
-	if url == "" {
-		return azcore.AccessToken{}, fmt.Errorf("access token server URL is not set")
-	}
-	if scope == "" {
-		return azcore.AccessToken{}, fmt.Errorf("access token scope is not set")
-	}
-
-	// Construct the request
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return azcore.AccessToken{}, err
-	}
-	q := req.URL.Query()
-	q.Add("scope", scope)
-	req.URL.RawQuery = q.Encode()
-	req.Header.Set("User-Agent", GetUserAgentExtension())
-
-	// Send the request
-	resp, err := client.Do(req)
-	if err != nil {
-		return azcore.AccessToken{}, fmt.Errorf("error making request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return azcore.AccessToken{}, fmt.Errorf("error: %s", resp.Status)
-	}
-
-	// Decode the response body into the AccessToken struct
-	var token azcore.AccessToken
-	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
-		return azcore.AccessToken{}, fmt.Errorf("error decoding json: %w", err)
-	}
-	return token, nil
+	_ = "STUB: not implemented"
+	return *new(azcore.AccessToken), nil
 }
+
+// Construct the request
+
+// Send the request
+
+// Decode the response body into the AccessToken struct

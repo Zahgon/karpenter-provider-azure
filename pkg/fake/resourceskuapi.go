@@ -18,12 +18,10 @@ package fake
 
 import (
 	"context"
-	"fmt"
 
 	//nolint:staticcheck // deprecated package
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-08-01/compute"
 	"github.com/Azure/skewer"
-	"github.com/samber/lo"
 )
 
 // TODO: consider using fakes from skewer itself
@@ -42,55 +40,28 @@ type ResourceSKUsAPI struct {
 
 // Reset must be called between tests otherwise tests will pollute each other.
 func (s *ResourceSKUsAPI) Reset() {
-	//c.ResourceSKUsBehavior.Reset()
-	s.Error = nil
+	_ = "STUB: not implemented"
+	// c.ResourceSKUsBehavior.Reset()
+	return
 }
 
 func (s *ResourceSKUsAPI) ListComplete(_ context.Context, _, _ string) (compute.ResourceSkusResultIterator, error) {
-	if s.Error != nil {
-		return compute.ResourceSkusResultIterator{}, s.Error
-	}
-	resourceSkus := ResourceSkus[s.Location]
-	return compute.NewResourceSkusResultIterator(
-		compute.NewResourceSkusResultPage(
-			// cur
-			compute.ResourceSkusResult{
-				Value: &resourceSkus,
-			},
-			// fn
-			func(ctx context.Context, result compute.ResourceSkusResult) (compute.ResourceSkusResult, error) {
-				return compute.ResourceSkusResult{
-					Value:    nil, // end of iterator
-					NextLink: nil,
-				}, nil
-			},
-		),
-	), nil
+	_ = "STUB: not implemented"
+	return *new(compute.ResourceSkusResultIterator), nil
 }
+
+// cur
+
+// fn
+
+// end of iterator
 
 // MakeSKU looks up a full *skewer.SKU from the fake ResourceSkus data for the default Region.
 // This includes Name, Family, Capabilities (vCPU count, etc.), and other SKU metadata.
 // Panics if the SKU is not found in the fake data.
-func MakeSKU(skuName string) *skewer.SKU {
-	return MakeSKUForRegion(skuName, Region)
-}
+func MakeSKU(skuName string) *skewer.SKU { _ = "STUB: not implemented"; return nil }
 
 // MakeSKUForRegion looks up a full *skewer.SKU from the fake ResourceSkus data for the given region.
 // This includes Name, Family, Capabilities (vCPU count, etc.), and other SKU metadata.
 // Panics if the SKU is not found in the fake data.
-func MakeSKUForRegion(skuName, region string) *skewer.SKU {
-	data := ResourceSkus[region]
-	for _, sku := range data {
-		if lo.FromPtr(sku.Name) == skuName {
-			return &skewer.SKU{
-				Name:         sku.Name,
-				Capabilities: sku.Capabilities,
-				Locations:    sku.Locations,
-				Family:       sku.Family,
-				Size:         sku.Size,
-				ResourceType: sku.ResourceType,
-			}
-		}
-	}
-	panic(fmt.Sprintf("SKU %q not found in fake ResourceSkus for region %q", skuName, region))
-}
+func MakeSKUForRegion(skuName, region string) *skewer.SKU { _ = "STUB: not implemented"; return nil }

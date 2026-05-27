@@ -18,25 +18,11 @@ package test
 
 import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
-	"github.com/Azure/karpenter-provider-azure/pkg/fake"
-	"github.com/samber/lo"
 )
 
 func MakeNetworkSecurityGroup(resourceGroup string, name string) armnetwork.SecurityGroup {
-	nsgID := fake.MakeNetworkSecurityGroupID(resourceGroup, name)
-
-	result := armnetwork.SecurityGroup{
-		ID:   &nsgID,
-		Name: &name,
-		Properties: &armnetwork.SecurityGroupPropertiesFormat{
-			SecurityRules: []*armnetwork.SecurityRule{
-				{
-					Name: lo.ToPtr("k8s-azure-lb_allow_IPv4_0000"),
-					// TODO: Not filling this in now, can later if we need it
-				},
-			},
-		},
-	}
-
-	return result
+	_ = "STUB: not implemented"
+	return *new(armnetwork.SecurityGroup)
 }
+
+// TODO: Not filling this in now, can later if we need it

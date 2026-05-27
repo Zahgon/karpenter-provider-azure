@@ -22,11 +22,8 @@ package models
 
 import (
 	"context"
-	stderrors "errors"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/validate"
 )
 
 // LocalDNSOverrides LocalDNSOverrides is a map of zone names for Vnet and Kube DNS overrides.
@@ -36,52 +33,12 @@ type LocalDNSOverrides map[string]LocalDNSOverride
 
 // Validate validates this local DNS overrides
 func (m LocalDNSOverrides) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	for k := range m {
-
-		if err := validate.Required(k, "body", m[k]); err != nil {
-			return err
-		}
-		if val, ok := m[k]; ok {
-			if err := val.Validate(formats); err != nil {
-				ve := new(errors.Validation)
-				if stderrors.As(err, &ve) {
-					return ve.ValidateName(k)
-				}
-				ce := new(errors.CompositeError)
-				if stderrors.As(err, &ce) {
-					return ce.ValidateName(k)
-				}
-
-				return err
-			}
-		}
-
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 // ContextValidate validate this local DNS overrides based on the context it is used
 func (m LocalDNSOverrides) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	var res []error
-
-	for k := range m {
-
-		if val, ok := m[k]; ok {
-			if err := val.ContextValidate(ctx, formats); err != nil {
-				return err
-			}
-		}
-
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
+	_ = "STUB: not implemented"
 	return nil
 }

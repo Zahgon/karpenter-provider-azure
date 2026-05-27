@@ -15,36 +15,27 @@
 package imagefamily
 
 import (
-	"strings"
-
-	"github.com/blang/semver/v4"
-	"github.com/samber/lo"
-
 	"github.com/Azure/karpenter-provider-azure/pkg/apis/v1beta1"
 )
 
 // UseAzureLinux3 checks if the Kubernetes version is 1.32.0 or higher,
 // which is when Azure Linux 3 support starts
 func UseAzureLinux3(kubernetesVersion string) bool {
+	_ = "STUB: not implemented"
 	// Parse version, stripping any 'v' prefix if present
-	version, err := semver.ParseTolerant(strings.TrimPrefix(kubernetesVersion, "v"))
-	if err != nil {
-		// If we can't parse the version, default to AzureLinux (false)
-		return false
-	}
-	return version.GE(semver.Version{Major: 1, Minor: 32})
+	return false
 }
+
+// If we can't parse the version, default to AzureLinux (false)
 
 // UseUbuntu2404 is when AKS starts defaulting support for Ubuntu2404
 func UseUbuntu2404(kubernetesVersion string) bool {
+	_ = "STUB: not implemented"
 	// Parse version, stripping any 'v' prefix if present
-	version, err := semver.ParseTolerant(strings.TrimPrefix(kubernetesVersion, "v"))
-	if err != nil {
-		// If we can't parse the version, default to Ubuntu2204 (false)
-		return false
-	}
-	return version.GE(semver.Version{Major: 1, Minor: 34})
+	return false
 }
+
+// If we can't parse the version, default to Ubuntu2204 (false)
 
 // ResolvesToUbuntu2004 returns true if the given image-family + FIPS-mode
 // combination would resolve to the Ubuntu2004 ImageFamily implementation
@@ -61,7 +52,6 @@ func UseUbuntu2404(kubernetesVersion string) bool {
 // existing logic flow untouched. If the rule in defaultUbuntu ever changes,
 // update this helper to match.
 func ResolvesToUbuntu2004(familyName *string, fipsMode *v1beta1.FIPSMode) bool {
-	family := lo.FromPtr(familyName)
-	isUbuntuLegacyOrUnset := family == "" || family == v1beta1.UbuntuImageFamily
-	return isUbuntuLegacyOrUnset && lo.FromPtr(fipsMode) == v1beta1.FIPSModeFIPS
+	_ = "STUB: not implemented"
+	return false
 }

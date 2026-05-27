@@ -18,10 +18,7 @@ package offerings
 
 import (
 	"context"
-	"errors"
 
-	sdkerrors "github.com/Azure/azure-sdk-for-go-extensions/pkg/errors"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/karpenter-provider-azure/pkg/cache"
 	"github.com/Azure/skewer"
 	corecloudprovider "sigs.k8s.io/karpenter/pkg/cloudprovider"
@@ -41,60 +38,16 @@ type ResponseErrorHandler struct {
 // HandlerEntries should generally be kept in sync.
 // See ErrorDetailHandler for more details.
 func NewResponseErrorHandler(unavailableOfferings *cache.UnavailableOfferings) *ResponseErrorHandler {
-	return &ResponseErrorHandler{
-		UnavailableOfferings: unavailableOfferings,
-		HandlerEntries: []responseErrorHandlerEntry{
-			{
-				match:  sdkerrors.LowPriorityQuotaHasBeenReached,
-				handle: handleLowPriorityQuotaError,
-			},
-			{
-				match:  sdkerrors.SKUFamilyQuotaHasBeenReached,
-				handle: handleSKUFamilyQuotaError,
-			},
-			{
-				match:  sdkerrors.IsSKUNotAvailable,
-				handle: handleSKUNotAvailableError,
-			},
-			{
-				match:  sdkerrors.ZonalAllocationFailureOccurred,
-				handle: handleZonalAllocationFailureError,
-			},
-			{
-				match:  sdkerrors.AllocationFailureOccurred,
-				handle: handleAllocationFailureError,
-			},
-			{
-				match:  sdkerrors.OverconstrainedZonalAllocationFailureOccurred,
-				handle: handleOverconstrainedZonalAllocationFailureError,
-			},
-			{
-				match:  sdkerrors.OverconstrainedAllocationFailureOccurred,
-				handle: handleOverconstrainedAllocationFailureError,
-			},
-			{
-				match:  sdkerrors.RegionalQuotaHasBeenReached,
-				handle: handleRegionalQuotaError,
-			},
-		},
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func (h *ResponseErrorHandler) extractErrorCodeAndMessage(err error) (string, string) {
-	var respErr *azcore.ResponseError
-	if errors.As(err, &respErr) {
-		return respErr.ErrorCode, respErr.Error()
-	}
-	return "", err.Error()
+	_ = "STUB: not implemented"
+	return "", ""
 }
 
 func (h *ResponseErrorHandler) Handle(ctx context.Context, sku *skewer.SKU, instanceType *corecloudprovider.InstanceType, zone, capacityType string, responseError error) error {
-	for _, handler := range h.HandlerEntries {
-		if handler.match(responseError) {
-			errorCode, errorMessage := h.extractErrorCodeAndMessage(responseError)
-			return handler.handle(ctx, h.UnavailableOfferings, sku, instanceType, zone, capacityType, errorCode, errorMessage)
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }

@@ -44,9 +44,7 @@ var allSKUEntries = func() []SKUEntry {
 }()
 
 // GetAllSKUEntries returns all SKU entries parsed from the embedded known_skus.yaml.
-func GetAllSKUEntries() []SKUEntry {
-	return allSKUEntries
-}
+func GetAllSKUEntries() []SKUEntry { _ = "STUB: not implemented"; return nil }
 
 var allAzureVMSkus = func() []skewer.SKU {
 	entries := GetAllSKUEntries()
@@ -60,31 +58,13 @@ var allAzureVMSkus = func() []skewer.SKU {
 // GetKarpenterWorkingSKUs returns a the list of SKUs that are
 // allowed to be used by Karpenter. This is a subset of the
 // SKUs that are available in Azure.
-func GetKarpenterWorkingSKUs() []skewer.SKU {
-	workingSKUs := []skewer.SKU{}
-	for _, sku := range allAzureVMSkus {
-		var exclude bool
-		// If we find this SKU in the AKS restricted list, exclude it
-		for _, aksRestrictedSKU := range AKSRestrictedVMSizes.UnsortedList() {
-			if aksRestrictedSKU == sku.GetName() {
-				exclude = true
-			}
-		}
-		// If it's not in the AKS restricted list, it may be in the Karpenter restricted list
-		if !exclude {
-			for _, karpenterRestrictedSKU := range karpenterRestrictedVMSKUs.UnsortedList() {
-				if karpenterRestrictedSKU == sku.GetName() {
-					exclude = true
-				}
-			}
-		}
-		// If it's not in any of the restricted lists, we register it as a working VM SKU
-		if !exclude {
-			workingSKUs = append(workingSKUs, sku)
-		}
-	}
-	return workingSKUs
-}
+func GetKarpenterWorkingSKUs() []skewer.SKU { _ = "STUB: not implemented"; return nil }
+
+// If we find this SKU in the AKS restricted list, exclude it
+
+// If it's not in the AKS restricted list, it may be in the Karpenter restricted list
+
+// If it's not in any of the restricted lists, we register it as a working VM SKU
 
 var (
 	// TODO: some of these sizes are no longer in allVMSkus so we probably don't need to explicitly exclude them here.

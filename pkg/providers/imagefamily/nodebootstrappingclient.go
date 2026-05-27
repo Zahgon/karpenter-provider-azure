@@ -18,23 +18,12 @@ package imagefamily
 
 import (
 	"context"
-	"fmt"
-	"log/slog"
-	"os"
 	"sync"
-	"time"
 
-	"github.com/Azure/aks-middleware/http/client/direct/restlogger"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
-	"github.com/Azure/karpenter-provider-azure/pkg/auth"
 	types "github.com/Azure/karpenter-provider-azure/pkg/providers/imagefamily/types"
-	"github.com/Azure/karpenter-provider-azure/pkg/provisionclients/client"
-	"github.com/Azure/karpenter-provider-azure/pkg/provisionclients/client/operations"
 	"github.com/Azure/karpenter-provider-azure/pkg/provisionclients/models"
-	httptransport "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/strfmt"
 )
 
 // As of this time, for managed identity, token caching exists in the implementation beneath MSAL GetToken(...) as below. This means our caching is not needed if MSAL GetToken(...) caching is valid.
@@ -52,12 +41,8 @@ type tokenProvider struct {
 }
 
 func (t *tokenProvider) getToken(ctx context.Context, credential azcore.TokenCredential) (azcore.AccessToken, error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	return credential.GetToken(ctx, policy.TokenRequestOptions{
-		Scopes: []string{auth.TokenScope(t.cloud)},
-	})
+	_ = "STUB: not implemented"
+	return *new(azcore.AccessToken), nil
 }
 
 // NodeBootstrappingClient implements the NodeBootstrappingAPI interface using the swagger-generated client.
@@ -82,17 +67,8 @@ func NewNodeBootstrappingClient(
 	serverURL string,
 	enableLogging bool,
 ) (*NodeBootstrappingClient, error) {
-	return &NodeBootstrappingClient{
-		serverURL:         serverURL,
-		subscriptionID:    subscriptionID,
-		resourceGroupName: resourceGroupName,
-		resourceName:      resourceName,
-		credential:        credential,
-		tokenProvider: &tokenProvider{
-			cloud: cloud,
-		},
-		enableLogging: enableLogging,
-	}, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 // Get implements the NodeBootstrappingAPI interface.
@@ -101,52 +77,14 @@ func (c *NodeBootstrappingClient) Get(
 	ctx context.Context,
 	parameters *models.ProvisionValues,
 ) (types.NodeBootstrapping, error) {
-	transport := httptransport.New(c.serverURL, "/", []string{"http"})
-
-	// Add Authorization Bearer token header
-	token, err := c.tokenProvider.getToken(ctx, c.credential)
-	if err != nil {
-		return types.NodeBootstrapping{}, fmt.Errorf("failed to get token: %w", err)
-	}
-	transport.DefaultAuthentication = httptransport.BearerToken(token.Token)
-
-	// Middleware logging only if ENABLE_AZURE_SDK_LOGGING flag is enabled
-	if c.enableLogging {
-		logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-		loggingClient := restlogger.NewLoggingClient(logger)
-		transport.Transport = loggingClient.Transport
-	}
-
-	// Create the client
-	client := client.New(transport, strfmt.Default)
-
-	// Prepare the parameters for the request
-	params := operations.NewNodeBootstrappingGetParams()
-	params.ResourceGroupName = c.resourceGroupName
-	params.ResourceName = c.resourceName
-	params.SubscriptionID = c.subscriptionID
-	params.Parameters = parameters
-
-	params.WithTimeout(30 * time.Second)
-	params.Context = ctx
-
-	resp, err := client.Operations.NodeBootstrappingGet(params)
-	if err != nil {
-		return types.NodeBootstrapping{}, err
-	}
-
-	if resp.Payload == nil {
-		return types.NodeBootstrapping{}, fmt.Errorf("no payload in response")
-	}
-	if resp.Payload.Cse == nil || *resp.Payload.Cse == "" {
-		return types.NodeBootstrapping{}, fmt.Errorf("no CSE in response")
-	}
-	if resp.Payload.CustomData == nil || *resp.Payload.CustomData == "" {
-		return types.NodeBootstrapping{}, fmt.Errorf("no CustomData in response")
-	}
-
-	return types.NodeBootstrapping{
-		CustomDataEncodedDehydratable: *resp.Payload.CustomData,
-		CSEDehydratable:               *resp.Payload.Cse,
-	}, nil
+	_ = "STUB: not implemented"
+	return *new(types.NodeBootstrapping), nil
 }
+
+// Add Authorization Bearer token header
+
+// Middleware logging only if ENABLE_AZURE_SDK_LOGGING flag is enabled
+
+// Create the client
+
+// Prepare the parameters for the request

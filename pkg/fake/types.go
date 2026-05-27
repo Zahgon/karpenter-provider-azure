@@ -40,68 +40,29 @@ type MockedFunction[I any, O any] struct {
 // transformer in Invoke. The hook may modify the input in place or return an
 // error to short-circuit the call.
 func (m *MockedFunction[I, O]) SetCustomTransformer(fn func(*I) error) {
-	m.customTransformerMu.Lock()
-	defer m.customTransformerMu.Unlock()
-	m.customTransformer = fn
+	_ = "STUB: not implemented"
+	return
 }
 
 func (m *MockedFunction[I, O]) getCustomTransformer() func(*I) error {
-	m.customTransformerMu.RLock()
-	defer m.customTransformerMu.RUnlock()
-	return m.customTransformer
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // Reset must be called between tests otherwise tests will pollute
 // each other.
-func (m *MockedFunction[I, O]) Reset() {
-	m.Output.Reset()
-	m.CalledWithInput.Reset()
-	m.Error.Reset()
-	m.SetCustomTransformer(nil)
-
-	m.successfulCalls.Store(0)
-	m.failedCalls.Store(0)
-}
+func (m *MockedFunction[I, O]) Reset() { _ = "STUB: not implemented"; return }
 
 func (m *MockedFunction[I, O]) Invoke(input *I, defaultTransformer func(*I) (O, error)) (O, error) {
-	m.CalledWithInput.Add(input)
-	err := m.Error.Get()
-	if err != nil {
-		m.failedCalls.Add(1)
-		return *new(O), err
-	}
-
-	if ct := m.getCustomTransformer(); ct != nil {
-		if err := ct(input); err != nil {
-			m.failedCalls.Add(1)
-			return *new(O), err
-		}
-	}
-
-	if !m.Output.IsNil() {
-		m.successfulCalls.Add(1)
-		return *m.Output.Clone(), nil
-	}
-	out, err := defaultTransformer(input)
-	if err != nil {
-		m.failedCalls.Add(1)
-	} else {
-		m.successfulCalls.Add(1)
-	}
-	return out, err
+	_ = "STUB: not implemented"
+	return *new(O), nil
 }
 
-func (m *MockedFunction[I, O]) Calls() int {
-	return m.SuccessfulCalls() + m.FailedCalls()
-}
+func (m *MockedFunction[I, O]) Calls() int { _ = "STUB: not implemented"; return 0 }
 
-func (m *MockedFunction[I, O]) SuccessfulCalls() int {
-	return int(m.successfulCalls.Load())
-}
+func (m *MockedFunction[I, O]) SuccessfulCalls() int { _ = "STUB: not implemented"; return 0 }
 
-func (m *MockedFunction[I, O]) FailedCalls() int {
-	return int(m.failedCalls.Load())
-}
+func (m *MockedFunction[I, O]) FailedCalls() int { _ = "STUB: not implemented"; return 0 }
 
 type MockedLRO[I any, O any] struct {
 	MockedFunction[I, O]
@@ -109,54 +70,18 @@ type MockedLRO[I any, O any] struct {
 }
 
 // Reset must be called between tests otherwise tests will pollute each other.
-func (m *MockedLRO[I, O]) Reset() {
-	m.MockedFunction.Reset()
-	m.BeginError.Reset()
-}
+func (m *MockedLRO[I, O]) Reset() { _ = "STUB: not implemented"; return }
 
 func (m *MockedLRO[I, O]) Invoke(input *I, defaultTransformer func(*I) (*O, error)) (*runtime.Poller[O], error) {
-	m.CalledWithInput.Add(input)
-
-	if err := m.BeginError.Get(); err != nil {
-		m.failedCalls.Add(1)
-		return nil, err
-	}
-	if err := m.Error.Get(); err != nil {
-		m.failedCalls.Add(1)
-		return newMockPoller[O](nil, err)
-	}
-
-	if ct := m.getCustomTransformer(); ct != nil {
-		if err := ct(input); err != nil {
-			m.failedCalls.Add(1)
-			return nil, err
-		}
-	}
-
-	if !m.Output.IsNil() {
-		m.successfulCalls.Add(1)
-		return newMockPoller(m.Output.Clone(), nil)
-	}
-	out, err := defaultTransformer(input)
-	if err != nil {
-		m.failedCalls.Add(1)
-	} else {
-		m.successfulCalls.Add(1)
-	}
-	return newMockPoller(out, err)
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
-func (m *MockedLRO[I, O]) Calls() int {
-	return m.SuccessfulCalls() + m.FailedCalls()
-}
+func (m *MockedLRO[I, O]) Calls() int { _ = "STUB: not implemented"; return 0 }
 
-func (m *MockedLRO[I, O]) SuccessfulCalls() int {
-	return int(m.successfulCalls.Load())
-}
+func (m *MockedLRO[I, O]) SuccessfulCalls() int { _ = "STUB: not implemented"; return 0 }
 
-func (m *MockedLRO[I, O]) FailedCalls() int {
-	return int(m.failedCalls.Load())
-}
+func (m *MockedLRO[I, O]) FailedCalls() int { _ = "STUB: not implemented"; return 0 }
 
 // MockHandler returns a pre-defined result or error.
 type MockHandler[T any] struct {
@@ -166,35 +91,31 @@ type MockHandler[T any] struct {
 
 // Done returns true if the LRO has reached a terminal state. TrivialHandler is always done.
 func (h MockHandler[T]) Done() bool {
-	return true
+	_ = "STUB: not implemented"
+
+	// Poll fetches the latest state of the LRO.
+	return false
 }
 
-// Poll fetches the latest state of the LRO.
 func (h MockHandler[T]) Poll(context.Context) (*http.Response, error) {
-	if h.err != nil {
-		return nil, h.err
-	}
+	_ = "STUB: not implemented"
 	return nil, nil
 }
 
 // Result is called once the LRO has reached a terminal state. It populates the out parameter
 // with the result of the operation.
 func (h MockHandler[T]) Result(_ context.Context, result *T) error {
-	if h.err != nil {
-		return h.err
-	}
-	*result = *h.result // TODO: may need to deep copy
+	_ = "STUB: not implemented"
 	return nil
 }
 
+// TODO: may need to deep copy
+
 // newMockPoller returns a poller with a mock handler that returns the given result and error.
 func newMockPoller[T any](result *T, err error) (*runtime.Poller[T], error) {
+	_ = "STUB: not implemented"
 	// http.Response and Pipeline are not used
-	return runtime.NewPoller(nil, runtime.Pipeline{}, &runtime.NewPollerOptions[T]{
-		Handler: MockHandler[T]{
-			result: result,
-			err:    err,
-		},
-		// Response: &result at the poller level is not needed, result from handler is always used
-	})
+	return nil, nil
 }
+
+// Response: &result at the poller level is not needed, result from handler is always used

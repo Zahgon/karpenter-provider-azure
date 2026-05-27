@@ -18,8 +18,6 @@ package metrics
 
 import (
 	"context"
-
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var (
@@ -46,15 +44,10 @@ type metric struct {
 // > Note: since we are logging behind the scenes, rather that emitting an actual prometheus metric we do still accept
 // > a context, and msg for the logging.
 func (m *metric) Inc(ctx context.Context, msg string, values ...Value) {
-	logger := log.FromContext(ctx)
-
-	// Each metric should emit its own name, under the "metric" key.
-	fields := []any{
-		"metric", m.name,
-	}
-
-	// Get and include the set of metrics key value pairs.
-	fields = append(fields, ValuesToKeyValuePairs(values...)...)
-
-	logger.Info(msg, fields...)
+	_ = "STUB: not implemented"
+	return
 }
+
+// Each metric should emit its own name, under the "metric" key.
+
+// Get and include the set of metrics key value pairs.

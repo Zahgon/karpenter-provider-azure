@@ -18,59 +18,32 @@ package operator
 
 import (
 	"context"
-	"encoding/base64"
-	"fmt"
 	"net"
-	"strings"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/go-logr/logr"
-	"github.com/patrickmn/go-cache"
 	"github.com/samber/lo"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/transport"
-	"k8s.io/client-go/util/flowcontrol"
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-	karpapis "sigs.k8s.io/karpenter/pkg/apis"
 	karpv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 
 	"sigs.k8s.io/karpenter/pkg/operator"
-	coreoptions "sigs.k8s.io/karpenter/pkg/operator/options"
 
-	"github.com/Azure/karpenter-provider-azure/pkg/apis/v1beta1"
 	"github.com/Azure/karpenter-provider-azure/pkg/auth"
 	azurecache "github.com/Azure/karpenter-provider-azure/pkg/cache"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
-
-	"github.com/Azure/karpenter-provider-azure/pkg/consts"
-	"github.com/Azure/karpenter-provider-azure/pkg/operator/options"
-	"github.com/Azure/karpenter-provider-azure/pkg/providers/allocationstrategy"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/azclient"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/imagefamily"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/instance"
-	"github.com/Azure/karpenter-provider-azure/pkg/providers/instance/machinecache"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/instancetype"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/kubernetesversion"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/launchtemplate"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/loadbalancer"
-	"github.com/Azure/karpenter-provider-azure/pkg/providers/networksecuritygroup"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/pricing"
-	"github.com/Azure/karpenter-provider-azure/pkg/utils"
-	armopts "github.com/Azure/karpenter-provider-azure/pkg/utils/clientopts"
 )
 
 func init() {
@@ -105,333 +78,79 @@ type Operator struct {
 }
 
 func kubeDNSIP(ctx context.Context, kubernetesInterface kubernetes.Interface) (net.IP, error) {
-	if kubernetesInterface == nil {
-		return nil, fmt.Errorf("no K8s client provided")
-	}
-	dnsService, err := kubernetesInterface.CoreV1().Services("kube-system").Get(ctx, "kube-dns", metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	kubeDNSIP := net.ParseIP(dnsService.Spec.ClusterIP)
-	if kubeDNSIP == nil {
-		return nil, fmt.Errorf("parsing cluster IP")
-	}
-	return kubeDNSIP, nil
+	_ = "STUB: not implemented"
+	return *new(net.IP), nil
 }
 
 func NewOperator(ctx context.Context, operator *operator.Operator) (context.Context, *Operator) {
-	azConfig, err := GetAZConfig()
-	lo.Must0(err, "creating Azure config") // NOTE: we prefer this over the cleaner azConfig := lo.Must(GetAzConfig()), as when initializing the client there are helpful error messages in initializing clients and the azure config
-
-	log.FromContext(ctx).V(0).Info("Initial AZConfig", "azConfig", azConfig.String())
-
-	env, err := auth.ResolveCloudEnvironment(azConfig)
-	lo.Must0(err, "resolving cloud environment")
-
-	cred, err := getCredential(env)
-	lo.Must0(err, "getting Azure credential")
-
-	// Get a token to ensure we can
-	lo.Must0(ensureToken(cred, env), "ensuring Azure token can be retrieved")
-
-	azClient, err := azclient.NewAZClient(ctx, azConfig, env, cred)
-	lo.Must0(err, "creating Azure client")
-	if options.FromContext(ctx).VnetGUID == "" && options.FromContext(ctx).NetworkPluginMode == consts.NetworkPluginModeOverlay {
-		vnetGUID, err := getVnetGUID(ctx, cred, azConfig, options.FromContext(ctx).SubnetID)
-		lo.Must0(err, "getting VNET GUID")
-		options.FromContext(ctx).VnetGUID = vnetGUID
-	}
-
-	// These options are set similarly to those used by operator.KubernetesInterface
-	inClusterConfig := lo.Must(rest.InClusterConfig())
-	inClusterConfig.RateLimiter = flowcontrol.NewTokenBucketRateLimiter(float32(coreoptions.FromContext(ctx).KubeClientQPS), coreoptions.FromContext(ctx).KubeClientBurst)
-	inClusterConfig.UserAgent = auth.GetUserAgentExtension()
-	inClusterClient := kubernetes.NewForConfigOrDie(inClusterConfig)
-
-	// Build a dynamic client over the managed (workload) cluster config. operator.GetConfig()
-	// is the rest.Config that controller-runtime uses for the manager, which targets the
-	// workload cluster (via mounted kubeconfig in CCP, or same as in-cluster in non-CCP).
-	// LocalDNS gate evaluation reads out-of-tree CRDs (Cilium / Calico NetworkPolicy) through
-	// this; the typed client lives on the embedded operator (operator.KubernetesInterface).
-	managedConfig := rest.CopyConfig(operator.GetConfig())
-	managedConfig.RateLimiter = flowcontrol.NewTokenBucketRateLimiter(float32(coreoptions.FromContext(ctx).KubeClientQPS), coreoptions.FromContext(ctx).KubeClientBurst)
-	managedConfig.UserAgent = auth.GetUserAgentExtension()
-	managedDynamicClient := dynamic.NewForConfigOrDie(managedConfig)
-
-	if options.FromContext(ctx).DNSServiceIP == "" {
-		kubeDNSIP, err := kubeDNSIP(ctx, operator.KubernetesInterface)
-		if err != nil { // fall back to default
-			log.FromContext(ctx).V(1).Info("unable to detect the IP of the kube-dns service, using default 10.0.0.10", "error", err)
-			options.FromContext(ctx).DNSServiceIP = "10.0.0.10"
-		} else {
-			log.FromContext(ctx).V(1).Info("discovered DNS service IP", "dns-service-ip", kubeDNSIP.String())
-			options.FromContext(ctx).DNSServiceIP = kubeDNSIP.String()
-		}
-	}
-
-	unavailableOfferingsCache := azurecache.NewUnavailableOfferings()
-	pricingProvider := pricing.NewProvider(
-		ctx,
-		env,
-		pricing.NewAPI(env.Cloud),
-		azConfig.Location,
-		operator.Elected(),
-	)
-
-	kubernetesVersionProvider := kubernetesversion.NewKubernetesVersionProvider(
-		operator.KubernetesInterface,
-		cache.New(azurecache.KubernetesVersionTTL,
-			azurecache.DefaultCleanupInterval),
-	)
-	imageProvider := imagefamily.NewProvider(
-		azClient.ImageVersionsClient,
-		azConfig.Location,
-		azConfig.SubscriptionID,
-		azClient.NodeImageVersionsClient,
-		cache.New(imagefamily.ImageExpirationInterval,
-			imagefamily.ImageCacheCleaningInterval),
-	)
-	instanceTypeProvider := instancetype.NewDefaultProvider(
-		azConfig.Location,
-		cache.New(instancetype.InstanceTypesCacheTTL, azurecache.DefaultCleanupInterval),
-		azClient.SKUClient,
-		pricingProvider,
-		unavailableOfferingsCache,
-	)
-
-	// Ensure we're able to hydrate instance types before starting any controllers
-	// that depend on them. The instance type controller will refresh this list
-	// perioidcally once all controllers are running.
-	lo.Must0(instanceTypeProvider.UpdateInstanceTypes(ctx))
-
-	imageResolver := imagefamily.NewDefaultResolver(
-		operator.GetClient(),
-		imageProvider,
-		instanceTypeProvider,
-		azClient.NodeBootstrappingClient,
-	)
-	networkSecurityGroupProvider := networksecuritygroup.NewProvider(
-		azClient.NetworkSecurityGroupsClient,
-		options.FromContext(ctx).NodeResourceGroup,
-	)
-	launchTemplateProvider := launchtemplate.NewProvider(
-		ctx,
-		imageResolver,
-		imageProvider,
-		networkSecurityGroupProvider,
-		lo.Must(getCABundle(operator.GetConfig())),
-		options.FromContext(ctx).ClusterEndpoint,
-		azConfig.TenantID,
-		azConfig.SubscriptionID,
-		azConfig.ResourceGroup,
-		options.FromContext(ctx).KubeletIdentityClientID,
-		options.FromContext(ctx).NodeResourceGroup,
-		azConfig.Location,
-		options.FromContext(ctx).ProvisionMode,
-	)
-	loadBalancerProvider := loadbalancer.NewProvider(
-		azClient.LoadBalancersClient,
-		cache.New(loadbalancer.LoadBalancersCacheTTL, azurecache.DefaultCleanupInterval),
-		options.FromContext(ctx).NodeResourceGroup,
-	)
-	allocationStrategyProvider := allocationstrategy.NewProvider()
-	vmInstanceProvider := instance.NewDefaultVMProvider(
-		azClient,
-		instanceTypeProvider,
-		allocationStrategyProvider,
-		launchTemplateProvider,
-		loadBalancerProvider,
-		networkSecurityGroupProvider,
-		unavailableOfferingsCache,
-		azConfig.Location,
-		options.FromContext(ctx).NodeResourceGroup,
-		azConfig.SubscriptionID,
-		options.FromContext(ctx).ProvisionMode,
-		options.FromContext(ctx).DiskEncryptionSetID,
-		env,
-	)
-
-	aksMachineCache := machinecache.New(
-		ctx,
-		azClient.AKSMachinesClient(),
-		azConfig.ResourceGroup,
-		options.FromContext(ctx).ClusterName,
-		options.FromContext(ctx).AKSMachinesPoolName,
-	)
-
-	aksMachineInstanceProvider := instance.NewAKSMachineProvider(
-		azClient,
-		instanceTypeProvider,
-		allocationStrategyProvider,
-		imageResolver,
-		unavailableOfferingsCache,
-		azConfig.SubscriptionID,
-		azConfig.ResourceGroup,
-		options.FromContext(ctx).ClusterName,
-		options.FromContext(ctx).AKSMachinesPoolName,
-		azConfig.Location,
-		options.FromContext(ctx).ProvisionMode == consts.ProvisionModeAKSMachineAPIHeaderBatch,
-		aksMachineCache,
-	)
-
-	return ctx, &Operator{
-		Operator:                     operator,
-		InClusterKubernetesInterface: inClusterClient,
-		ManagedDynamicInterface:      managedDynamicClient,
-		UnavailableOfferingsCache:    unavailableOfferingsCache,
-		KubernetesVersionProvider:    kubernetesVersionProvider,
-		ImageProvider:                imageProvider,
-		ImageResolver:                imageResolver,
-		LaunchTemplateProvider:       launchTemplateProvider,
-		PricingProvider:              pricingProvider,
-		InstanceTypesProvider:        instanceTypeProvider,
-		VMInstanceProvider:           vmInstanceProvider,
-		AKSMachineProvider:           aksMachineInstanceProvider,
-		LoadBalancerProvider:         loadBalancerProvider,
-		AZClient:                     azClient,
-	}
+	_ = "STUB: not implemented"
+	return *new(context.Context), nil
 }
 
-func GetAZConfig() (*auth.Config, error) {
-	cfg, err := auth.BuildAzureConfig()
-	if err != nil {
-		return nil, err
-	}
-	return cfg, nil
-}
+// NOTE: we prefer this over the cleaner azConfig := lo.Must(GetAzConfig()), as when initializing the client there are helpful error messages in initializing clients and the azure config
+
+// Get a token to ensure we can
+
+// These options are set similarly to those used by operator.KubernetesInterface
+
+// Build a dynamic client over the managed (workload) cluster config. operator.GetConfig()
+// is the rest.Config that controller-runtime uses for the manager, which targets the
+// workload cluster (via mounted kubeconfig in CCP, or same as in-cluster in non-CCP).
+// LocalDNS gate evaluation reads out-of-tree CRDs (Cilium / Calico NetworkPolicy) through
+// this; the typed client lives on the embedded operator (operator.KubernetesInterface).
+
+// fall back to default
+
+// Ensure we're able to hydrate instance types before starting any controllers
+// that depend on them. The instance type controller will refresh this list
+// perioidcally once all controllers are running.
+
+func GetAZConfig() (*auth.Config, error) { _ = "STUB: not implemented"; return nil, nil }
 
 func getCABundle(restConfig *rest.Config) (*string, error) {
+	_ = "STUB: not implemented"
 	// Discover CA Bundle from the REST client. We could alternatively
 	// have used the simpler client-go InClusterConfig() method.
 	// However, that only works when Karpenter is running as a Pod
 	// within the same cluster it's managing.
-	transportConfig, err := restConfig.TransportConfig()
-	if err != nil {
-		return nil, fmt.Errorf("discovering caBundle, loading transport config, %w", err)
-	}
-	_, err = transport.TLSConfigFor(transportConfig) // fills in CAData!
-	if err != nil {
-		return nil, fmt.Errorf("discovering caBundle, loading TLS config, %w", err)
-	}
-	return lo.ToPtr(base64.StdEncoding.EncodeToString(transportConfig.TLS.CAData)), nil
+	return nil, nil
 }
 
+// fills in CAData!
+
 func getVnetGUID(ctx context.Context, creds azcore.TokenCredential, cfg *auth.Config, subnetID string) (string, error) {
+	_ = "STUB: not implemented"
 	// TODO: Current the VNET client isn't used anywhere but this method. As such, it is not
 	// held on azclient like the other clients.
 	// We should possibly just put the vnet client on azclient, and then pass azclient in here, rather than
 	// constructing the VNET client here separate from all the other Azure clients.
-	env, err := auth.ResolveCloudEnvironment(cfg)
-	if err != nil {
-		return "", err
-	}
-
-	o := options.FromContext(ctx)
-	opts := armopts.DefaultARMOpts(env.Cloud, o.EnableAzureSDKLogging)
-	vnetClient, err := armnetwork.NewVirtualNetworksClient(cfg.SubscriptionID, creds, opts)
-	if err != nil {
-		return "", err
-	}
-
-	subnetParts, err := utils.GetVnetSubnetIDComponents(subnetID)
-	if err != nil {
-		return "", err
-	}
-	vnet, err := vnetClient.Get(context.Background(), subnetParts.ResourceGroupName, subnetParts.VNetName, nil)
-	if err != nil {
-		return "", err
-	}
-	if vnet.Properties == nil || vnet.Properties.ResourceGUID == nil {
-		return "", fmt.Errorf("vnet %s does not have a resource GUID", subnetParts.VNetName)
-	}
-	return *vnet.Properties.ResourceGUID, nil
+	return "", nil
 }
 
 // WaitForCRDs waits for the required CRDs to be available with a timeout
 func WaitForCRDs(ctx context.Context, timeout time.Duration, config *rest.Config, log logr.Logger) error {
-	requiredGVKs := getRequiredGVKs()
-	client, err := rest.HTTPClientFor(config)
-	if err != nil {
-		return fmt.Errorf("creating kubernetes client, %w", err)
-	}
-	restMapper, err := apiutil.NewDynamicRESTMapper(config, client)
-	if err != nil {
-		return fmt.Errorf("creating dynamic rest mapper, %w", err)
-	}
-
-	log.Info("waiting for required CRDs to be available", "gvks", requiredGVKs, "timeout", timeout)
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	for _, gvk := range requiredGVKs {
-		err := wait.PollUntilContextCancel(ctx, 10*time.Second, true, func(ctx context.Context) (bool, error) {
-			if _, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version); err != nil {
-				if meta.IsNoMatchError(err) {
-					log.V(1).Info("waiting for CRD to be available", "gvk", gvk)
-					return false, nil
-				}
-				return false, err
-			}
-			log.V(1).Info("CRD is available", "gvk", gvk)
-			return true, nil
-		})
-		if err != nil {
-			if ctx.Err() == context.DeadlineExceeded {
-				return fmt.Errorf("timed out waiting for CRD %s to be available", gvk)
-			}
-			return fmt.Errorf("failed to wait for CRD %s: %w", gvk, err)
-		}
-	}
-
-	log.Info("all required CRDs are available")
+	_ = "STUB: not implemented"
 	return nil
 }
 
 // ensureToken ensures we can get a token for the Azure environment. Note that this doesn't actually
 // use the token for anything, it just checks that we can get one.
 func ensureToken(cred azcore.TokenCredential, env *auth.Environment) error {
+	_ = "STUB: not implemented"
 	// Short timeout to avoid hanging forever if something bad happens
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	_, err := cred.GetToken(ctx, policy.TokenRequestOptions{
-		Scopes: []string{auth.TokenScope(env.Cloud)},
-	})
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func getCredential(env *auth.Environment) (azcore.TokenCredential, error) {
+	_ = "STUB: not implemented"
 	// TODO: Don't use NewDefaultAzureCredential
-	cred, err := azidentity.NewDefaultAzureCredential(&azidentity.DefaultAzureCredentialOptions{
-		ClientOptions: policy.ClientOptions{
-			Cloud: env.Cloud,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return auth.NewTokenWrapper(cred), nil
+	return *new(azcore.TokenCredential), nil
 }
 
 func getRequiredGVKs() []schema.GroupVersionKind {
+	_ = "STUB: not implemented"
 	// controller-runtime internal, ignore them as we don't watch them
-	internalTypes := []string{"WatchEvent", "UpdateOptions", "DeleteOptions", "ListOptions", "CreateOptions", "PatchOptions", "GetOptions"}
-	requiredGVKs := lo.Filter(lo.Keys(scheme.Scheme.AllKnownTypes()), func(gvk schema.GroupVersionKind, _ int) bool {
-		if lo.Contains(internalTypes, gvk.Kind) {
-			return false
-		}
-
-		// Ignore lists as well, we don't watch these
-		if strings.HasSuffix(gvk.Kind, "List") {
-			return false
-		}
-
-		return gvk.Group == karpapis.Group || gvk.Group == v1beta1.Group
-	})
-	return requiredGVKs
+	return nil
 }
+
+// Ignore lists as well, we don't watch these

@@ -18,12 +18,6 @@ package expectations
 
 import (
 	"context"
-	"encoding/base64"
-	"fmt"
-	"reflect"
-	"strings"
-	"sync"
-	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v7"
 	"github.com/Azure/karpenter-provider-azure/pkg/apis/v1beta1"
@@ -31,158 +25,69 @@ import (
 	"github.com/Azure/skewer"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/samber/lo"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	karpv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 	corecloudprovider "sigs.k8s.io/karpenter/pkg/cloudprovider"
 	"sigs.k8s.io/karpenter/pkg/controllers/provisioning"
 	"sigs.k8s.io/karpenter/pkg/controllers/provisioning/scheduling"
 	"sigs.k8s.io/karpenter/pkg/controllers/state"
-	"sigs.k8s.io/karpenter/pkg/metrics"
-	coreexpectations "sigs.k8s.io/karpenter/pkg/test/expectations"
 )
 
 func ExpectUnavailable(env *test.Environment, sku *skewer.SKU, zone string, capacityType string) {
-	GinkgoHelper()
-	Expect(env.UnavailableOfferingsCache.IsUnavailable(sku, zone, capacityType)).To(BeTrue())
+	_ = "STUB: not implemented"
+	return
 }
 
 func ExpectKubeletFlags(_ *test.Environment, customData string, expectedFlags map[string]string) {
-	GinkgoHelper()
-	kubeletFlags := customData[strings.Index(customData, "KUBELET_FLAGS=")+len("KUBELET_FLAGS=") : strings.Index(customData, "KUBELET_NODE_LABELS")]
-	for flag, value := range expectedFlags {
-		Expect(kubeletFlags).To(ContainSubstring(fmt.Sprintf("--%s=%s", flag, value)))
-	}
+	_ = "STUB: not implemented"
+	return
 }
 
-func ExpectDecodedCustomData(env *test.Environment) string {
-	GinkgoHelper()
-	Expect(env.VirtualMachinesAPI.VirtualMachineCreateOrUpdateBehavior.CalledWithInput.Len()).To(Equal(1))
-
-	vm := env.VirtualMachinesAPI.VirtualMachineCreateOrUpdateBehavior.CalledWithInput.Pop().VM
-	customData := *vm.Properties.OSProfile.CustomData
-	Expect(customData).ToNot(BeNil())
-
-	decodedBytes, err := base64.StdEncoding.DecodeString(customData)
-	Expect(err).To(Succeed())
-	decodedString := string(decodedBytes[:])
-
-	return decodedString
-}
+func ExpectDecodedCustomData(env *test.Environment) string { _ = "STUB: not implemented"; return "" }
 
 func ExpectCSEProvisioned(env *test.Environment) armcompute.VirtualMachineExtension {
-	GinkgoHelper()
-	var cse armcompute.VirtualMachineExtension
-
-	// CSE provisioning is asynchronous, starting after VM creation LRO completes
-	Eventually(func() bool {
-		GinkgoHelper()
-		cseRaw, ok := env.VirtualMachineExtensionsAPI.Extensions.Load("cse-agent-karpenter")
-		if ok {
-			cse = cseRaw
-			return true
-		}
-		return false
-	}).Should((BeTrue()), "Expected CSE extension to be created")
-
-	return cse
+	_ = "STUB: not implemented"
+	return *new(armcompute.VirtualMachineExtension)
 }
 
-func ExpectCSENotProvisioned(env *test.Environment) {
-	GinkgoHelper()
+// CSE provisioning is asynchronous, starting after VM creation LRO completes
 
-	time.Sleep(1 * time.Second)
-	_, ok := env.VirtualMachineExtensionsAPI.Extensions.Load("cse-agent-karpenter")
-	Expect(ok).To(BeFalse(), "Expected CSE extension should not be created, but it was found")
-}
+func ExpectCSENotProvisioned(env *test.Environment) { _ = "STUB: not implemented"; return }
 
 // ExpectCleanUp handled the cleanup of all Objects we need within testing that core does not
 //
 // Core's ExpectCleanedUp function does not currently cleanup ConfigMaps:
 // https://github.com/kubernetes-sigs/karpenter/blob/db8df23ffb0b689b116d99597316612c98d382ab/pkg/test/expectations/expectations.go#L244
 // TODO: surface this within core and remove this function
-func ExpectCleanUp(ctx context.Context, c client.Client) {
-	GinkgoHelper()
-	wg := sync.WaitGroup{}
-	namespaces := &corev1.NamespaceList{}
-	Expect(c.List(ctx, namespaces)).To(Succeed())
-	for _, object := range []client.Object{
-		&corev1.ConfigMap{},
-	} {
-		for _, namespace := range namespaces.Items {
-			wg.Add(1)
-			go func(object client.Object, namespace string) {
-				GinkgoHelper()
-				defer wg.Done()
-				defer GinkgoRecover()
-				Expect(c.DeleteAllOf(ctx, object, client.InNamespace(namespace),
-					&client.DeleteAllOfOptions{DeleteOptions: client.DeleteOptions{GracePeriodSeconds: lo.ToPtr(int64(0))}})).ToNot(HaveOccurred())
-			}(object, namespace.Name)
-		}
-	}
-	wg.Wait()
-}
+func ExpectCleanUp(ctx context.Context, c client.Client) { _ = "STUB: not implemented"; return }
 
 func ExpectInstanceResourcesHaveTags(ctx context.Context, name string, azureEnv *test.Environment, tags map[string]*string) *armcompute.VirtualMachine {
-	GinkgoHelper()
+	_ = "STUB: not implemented"
 
 	// The VM should be updated
-	updatedVM, err := azureEnv.VMInstanceProvider.Get(ctx, name)
-	Expect(err).ToNot(HaveOccurred())
-
-	Expect(updatedVM.Tags).To(Equal(tags), "Expected VM tags to match")
-	// Expect the identities to remain unchanged
-	Expect(updatedVM.Identity).To(BeNil())
-
-	// The NIC should be updated
-	updatedNIC, err := azureEnv.NetworkInterfacesAPI.Get(ctx, azureEnv.AzureResourceGraphAPI.ResourceGroup, name, nil)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(updatedNIC.Tags).To(Equal(tags), "Expected NIC tags to match")
-
-	// The extensions should be updated -- Note that we expect only 1 Extension update here because we're simulating scriptless
-	// mode which doesn't have a CSE extension.
-	Expect(azureEnv.VirtualMachineExtensionsAPI.VirtualMachineExtensionsUpdateBehavior.CalledWithInput.Len()).To(Equal(1))
-	for i := 0; i < 1; i++ {
-		extUpdate := azureEnv.VirtualMachineExtensionsAPI.VirtualMachineExtensionsUpdateBehavior.CalledWithInput.Pop().VirtualMachineExtensionUpdate
-		Expect(extUpdate).ToNot(BeNil())
-		Expect(extUpdate.Tags).ToNot(BeNil())
-		Expect(extUpdate.Tags).To(Equal(tags), "Expected VM extension tags to match")
-	}
-
-	return updatedVM
+	return nil
 }
+
+// Expect the identities to remain unchanged
+
+// The NIC should be updated
+
+// The extensions should be updated -- Note that we expect only 1 Extension update here because we're simulating scriptless
+// mode which doesn't have a CSE extension.
 
 // TODO: Upstream this?
 func ExpectLaunched(ctx context.Context, c client.Client, cloudProvider corecloudprovider.CloudProvider, provisioner *provisioning.Provisioner, pods ...*corev1.Pod) {
-	GinkgoHelper()
+	_ = "STUB: not implemented"
+
 	// Persist objects
-	for _, pod := range pods {
-		coreexpectations.ExpectApplied(ctx, c, pod)
-	}
-	results, err := provisioner.Schedule(ctx)
-	Expect(err).ToNot(HaveOccurred())
-	for _, m := range results.NewNodeClaims {
-		var nodeClaimName string
-		nodeClaimName, err = provisioner.Create(ctx, m, provisioning.WithReason(metrics.ProvisionedReason))
-		Expect(err).ToNot(HaveOccurred())
-		createdNodeClaim := &karpv1.NodeClaim{}
-		Expect(c.Get(ctx, types.NamespacedName{Name: nodeClaimName}, createdNodeClaim)).To(Succeed())
-		_, err = coreexpectations.ExpectNodeClaimDeployedNoNode(ctx, c, cloudProvider, createdNodeClaim)
-		Expect(err).ToNot(HaveOccurred())
-	}
+	return
 }
 
 func ExpectNodeClassHashUpdated(ctx context.Context, c client.Client, nodeClass *v1beta1.AKSNodeClass) {
-	GinkgoHelper()
-	nodeClass.Annotations = lo.Assign(nodeClass.Annotations, map[string]string{
-		v1beta1.AnnotationAKSNodeClassHash:        nodeClass.Hash(),
-		v1beta1.AnnotationAKSNodeClassHashVersion: v1beta1.AKSNodeClassHashVersion,
-	})
-	coreexpectations.ExpectApplied(ctx, c, nodeClass)
+	_ = "STUB: not implemented"
+	return
 }
 
 // instancePromiseWaiter breaks the import cycle between pkg/cloudprovider and
@@ -206,9 +111,8 @@ func ExpectProvisionedAndWaitForPromises(
 	azureEnv *test.Environment,
 	pods ...*corev1.Pod,
 ) {
-	GinkgoHelper()
-	coreexpectations.ExpectProvisioned(ctx, c, cluster, cp, provisioner, pods...)
-	cp.(instancePromiseWaiter).WaitForInstancePromises()
+	_ = "STUB: not implemented"
+	return
 }
 
 func ExpectScheduledNodeClaimsCreated(
@@ -217,37 +121,19 @@ func ExpectScheduledNodeClaimsCreated(
 	coreProvisioner *provisioning.Provisioner,
 	claims ...*scheduling.NodeClaim,
 ) []*karpv1.NodeClaim {
-	GinkgoHelper()
-
-	var nodeClaims []*karpv1.NodeClaim
-	for _, m := range claims {
-		nodeClaimName, err := coreProvisioner.Create(ctx, m, provisioning.WithReason(metrics.ProvisionedReason))
-		Expect(err).ToNot(HaveOccurred())
-
-		nodeClaim := &karpv1.NodeClaim{}
-		Expect(client.Get(ctx, types.NamespacedName{Name: nodeClaimName}, nodeClaim)).To(Succeed())
-		nodeClaims = append(nodeClaims, nodeClaim)
-	}
-	return nodeClaims
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func BindPodsToNode(ctx context.Context, client client.Client, cluster *state.Cluster, scheduledClaim *scheduling.NodeClaim, node *corev1.Node) {
-	GinkgoHelper()
-
-	for _, pod := range scheduledClaim.Pods {
-		// We have to manually bind the pod to the node when using a fakeClient by setting the value for pod.Spec.NodeName
-		// Note: This is a bit hacky but is what upstream does, see https://github.com/kubernetes-sigs/karpenter/blob/defdfae64097b8e58a211c429fa955896e515400/pkg/test/expectations/expectations.go#L307
-		if strings.Contains(reflect.TypeOf(client).String(), "fake") {
-			pod.Spec.NodeName = node.Name
-			err := client.Update(ctx, pod)
-			Expect(err).ToNot(HaveOccurred())
-			coreexpectations.ExpectExists(ctx, client, &corev1.Node{ObjectMeta: metav1.ObjectMeta{Name: node.Name, Namespace: node.Namespace}})
-		} else {
-			coreexpectations.ExpectManualBinding(ctx, client, pod, node)
-		}
-		Expect(cluster.UpdatePod(ctx, pod)).To(Succeed()) // track pod bindings
-	}
+	_ = "STUB: not implemented"
+	return
 }
+
+// We have to manually bind the pod to the node when using a fakeClient by setting the value for pod.Spec.NodeName
+// Note: This is a bit hacky but is what upstream does, see https://github.com/kubernetes-sigs/karpenter/blob/defdfae64097b8e58a211c429fa955896e515400/pkg/test/expectations/expectations.go#L307
+
+// track pod bindings
 
 // CreateAndWaitForPromises calls cloudProvider.Create and waits for async polling goroutines to complete.
 // It sets the Launched condition on the NodeClaim (mirroring what the core lifecycle controller
@@ -261,18 +147,12 @@ func CreateAndWaitForPromises(
 	azureEnv *test.Environment,
 	nodeClaim *karpv1.NodeClaim,
 ) (*karpv1.NodeClaim, error) {
-	GinkgoHelper()
-	result, err := cp.Create(ctx, nodeClaim)
-	// Simulate what the core lifecycle Launch controller does after Create():
-	// set Launched=True so the async goroutine's waitUntilLaunched unblocks.
-	// We fetch a fresh copy from the API server and do a status-only update to
-	// avoid "spec is immutable" errors when the test has modified the spec
-	// (e.g., conflicted NodeClaim tests).
-	fresh := &karpv1.NodeClaim{}
-	if getErr := azureEnv.Client().Get(ctx, types.NamespacedName{Name: nodeClaim.Name, Namespace: nodeClaim.Namespace}, fresh); getErr == nil {
-		fresh.StatusConditions().SetTrue(karpv1.ConditionTypeLaunched)
-		Expect(azureEnv.Client().Status().Update(ctx, fresh)).To(Succeed())
-	}
-	cp.(instancePromiseWaiter).WaitForInstancePromises()
-	return result, err
+	_ = "STUB: not implemented"
+	return nil, nil
 }
+
+// Simulate what the core lifecycle Launch controller does after Create():
+// set Launched=True so the async goroutine's waitUntilLaunched unblocks.
+// We fetch a fresh copy from the API server and do a status-only update to
+// avoid "spec is immutable" errors when the test has modified the spec
+// (e.g., conflicted NodeClaim tests).

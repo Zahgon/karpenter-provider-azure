@@ -17,18 +17,12 @@ limitations under the License.
 package skuclient
 
 import (
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
-	"github.com/Azure/karpenter-provider-azure/pkg/auth"
 	"github.com/Azure/skewer"
-	"github.com/jongio/azidext/go/azidext"
 )
 
 func NewSkuClient(subscriptionID string, cred azcore.TokenCredential, env cloud.Configuration) skewer.ResourceClient {
-	resourceManagerEndpoint := env.Services[cloud.ResourceManager].Endpoint
-	authorizer := azidext.NewTokenCredentialAdapter(cred, []string{auth.TokenScope(env)})
-	skuClient := compute.NewResourceSkusClientWithBaseURI(resourceManagerEndpoint, subscriptionID)
-	skuClient.Authorizer = authorizer
-	return skuClient
+	_ = "STUB: not implemented"
+	return *new(skewer.ResourceClient)
 }

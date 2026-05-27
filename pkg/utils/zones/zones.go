@@ -17,12 +17,7 @@ limitations under the License.
 package zones
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v7"
-	"github.com/Azure/karpenter-provider-azure/pkg/apis/v1beta1"
-	"github.com/samber/lo"
 	corecloudprovider "sigs.k8s.io/karpenter/pkg/cloudprovider"
 )
 
@@ -32,57 +27,38 @@ import (
 // see https://github.com/kubernetes-sigs/cloud-provider-azure/blob/84bacac916c52e3dbae8ec01f1d8ab5a20267b7d/pkg/provider/azure_standard.go#L579-L601
 const Regional = "0"
 
-func PlacementScopeForZone(zone string) string {
-	if zone == Regional {
-		return v1beta1.PlacementScopeRegional
-	}
-	return v1beta1.PlacementScopeZonal
-}
+func PlacementScopeForZone(zone string) string { _ = "STUB: not implemented"; return "" }
 
 // PlacementScopeForOffering returns the explicit karpenter.azure.com/placement-scope
 // requirement from an offering. The instance type provider is responsible for
 // setting this requirement on every generated offering.
 func PlacementScopeForOffering(offering *corecloudprovider.Offering) string {
-	return offering.Requirements.Get(v1beta1.LabelPlacementScope).Any()
+	_ = "STUB: not implemented"
+	return ""
 }
 
 // MakeAKSLabelZoneFromARMZone returns the zone value in format of <region>-<zone-id>.
 func MakeAKSLabelZoneFromARMZone(location string, zoneID string) string {
-	return fmt.Sprintf("%s-%s", strings.ToLower(location), zoneID)
+	_ = "STUB: not implemented"
+	return ""
 }
 
 // MakeAKSLabelZoneFromARMZones returns the AKS zone label value from an ARM zones array.
 // Returns Regional ("0") if the zones array is empty or nil (regional VM).
 // Returns an error if there are multiple zones.
 func MakeAKSLabelZoneFromARMZones(location string, zones []*string) (string, error) {
-	if len(zones) == 0 || zones[0] == nil {
-		return Regional, nil
-	}
-	if len(zones) == 1 {
-		if location == "" {
-			return "", fmt.Errorf("location is required for zonal resource")
-		}
-		return MakeAKSLabelZoneFromARMZone(location, *zones[0]), nil
-	}
-	return "", fmt.Errorf("resource has multiple zones")
+	_ = "STUB: not implemented"
+	return "", nil
 }
 
 // MakeARMZonesFromAKSLabelZone returns the zone ID from <region>-<zone-id>.
 // Regional VMs (zone="0") return an empty slice so the VM
 // is created without a zone assignment.
-func MakeARMZonesFromAKSLabelZone(z string) []*string {
-	if z == Regional {
-		return []*string{}
-	}
-	zoneNum := z[len(z)-1:]
-	return []*string{&zoneNum}
-}
+func MakeARMZonesFromAKSLabelZone(z string) []*string { _ = "STUB: not implemented"; return nil }
 
 // MakeAKSLabelZoneFromVM returns the zone for the given virtual machine, or Regional ("0") if there is no zone specified.
 // This matches the topology.kubernetes.io/zone label that AKS places on regional (non-zonal) nodes.
 func MakeAKSLabelZoneFromVM(vm *armcompute.VirtualMachine) (string, error) {
-	if vm == nil {
-		return "", fmt.Errorf("cannot pass in a nil virtual machine")
-	}
-	return MakeAKSLabelZoneFromARMZones(lo.FromPtr(vm.Location), vm.Zones)
+	_ = "STUB: not implemented"
+	return "", nil
 }

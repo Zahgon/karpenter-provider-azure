@@ -16,10 +16,6 @@ limitations under the License.
 
 package sku
 
-import "strings"
-
 // IsConfidential returns true if the SKU name indicates it's a confidential VM SKU.
 // The skuName is expected to be the VM size with Standard_ trimmed off the front
-func IsConfidential(skuName string) bool {
-	return strings.HasPrefix(skuName, "DC") || strings.HasPrefix(skuName, "EC")
-}
+func IsConfidential(skuName string) bool { _ = "STUB: not implemented"; return false }

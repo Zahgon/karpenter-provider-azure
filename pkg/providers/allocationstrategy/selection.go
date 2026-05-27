@@ -17,11 +17,7 @@ limitations under the License.
 package allocationstrategy
 
 import (
-	corev1 "k8s.io/api/core/v1"
-	karpv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 	corecloudprovider "sigs.k8s.io/karpenter/pkg/cloudprovider"
-
-	"github.com/Azure/karpenter-provider-azure/pkg/utils/zones"
 )
 
 // Selection is the outcome of a client-side allocation decision: a single
@@ -40,18 +36,12 @@ type Selection struct {
 }
 
 // CapacityType returns the karpenter.sh/capacity-type value of the chosen offering.
-func (s *Selection) CapacityType() string {
-	return s.Offering.Requirements.Get(karpv1.CapacityTypeLabelKey).Any()
-}
+func (s *Selection) CapacityType() string { _ = "STUB: not implemented"; return "" }
 
 // Zone returns the topology.kubernetes.io/zone value of the chosen offering.
-func (s *Selection) Zone() string {
-	return s.Offering.Requirements.Get(corev1.LabelTopologyZone).Any()
-}
+func (s *Selection) Zone() string { _ = "STUB: not implemented"; return "" }
 
 // PlacementScope returns the karpenter.azure.com/placement-scope value of the
 // chosen offering, falling back to inferring it from the offering's zone when
 // the label is absent.
-func (s *Selection) PlacementScope() string {
-	return zones.PlacementScopeForOffering(s.Offering)
-}
+func (s *Selection) PlacementScope() string { _ = "STUB: not implemented"; return "" }

@@ -18,10 +18,6 @@ package utils
 
 import (
 	_ "embed"
-	"strings"
-
-	"github.com/Azure/karpenter-provider-azure/pkg/apis/v1beta1"
-	"go.yaml.in/yaml/v2"
 )
 
 // TODO: Get these from agentbaker
@@ -58,88 +54,38 @@ func init() {
 	readGPUSKUConfig()
 }
 
-func readGPUSKUConfig() {
-	var gpuSKUConfig GPUSKUConfig
+func readGPUSKUConfig() { _ = "STUB: not implemented"; return }
 
-	err := yaml.Unmarshal(configFile, &gpuSKUConfig)
-	if err != nil {
-		panic(err)
-	}
+// Check if this SKU supports azurelinux or azurelinux3
 
-	for sku, info := range gpuSKUConfig {
-		allGPUSKUs[sku] = info.GPU
-		gpuSKUOSSupport[sku] = info.OS
-
-		switch info.GPU {
-		case v1beta1.ManufacturerNvidia:
-			nvidiaEnabledSKUs[sku] = true
-
-			// Check if this SKU supports azurelinux or azurelinux3
-			for _, os := range info.OS {
-				if os == "azurelinux" || os == "azurelinux3" {
-					marinerNvidiaEnabledSKUs[sku] = true
-					break
-				}
-			}
-		case v1beta1.ManufacturerAMD:
-			amdEnabledSKUs[sku] = true
-		}
-	}
-}
-
-func GetAKSGPUImageSHA(size string) string {
-	if UseGridDrivers(size) {
-		return AKSGPUGridVersionSuffix
-	}
-	return AKSGPUCudaVersionSuffix
-}
+func GetAKSGPUImageSHA(size string) string { _ = "STUB: not implemented"; return "" }
 
 // IsNvidiaEnabledSKU determines if an VM SKU has nvidia driver support
 func IsNvidiaEnabledSKU(vmSize string) bool {
+	_ = "STUB: not implemented"
 	// Trim the optional _Promo suffix.
-	vmSize = strings.ToLower(vmSize)
-	vmSize = strings.TrimSuffix(vmSize, "_promo")
-	return nvidiaEnabledSKUs[vmSize]
+	return false
 }
 
 // IsNvidiaEnabledSKU determines if an VM SKU has nvidia driver support
 func IsMarinerEnabledGPUSKU(vmSize string) bool {
+	_ = "STUB: not implemented"
 	// Trim the optional _Promo suffix.
-	vmSize = strings.ToLower(vmSize)
-	vmSize = strings.TrimSuffix(vmSize, "_promo")
-	return marinerNvidiaEnabledSKUs[vmSize]
+	return false
 }
 
 // NV series GPUs target graphics workloads vs NC which targets compute.
 // they typically use GRID, not CUDA drivers, and will fail to install CUDA drivers.
 // NVv1 seems to run with CUDA, NVv5 requires GRID.
 // NVv3 is untested on AKS, NVv4 is AMD so n/a, and NVv2 no longer seems to exist (?).
-func GetGPUDriverVersion(size string) string {
-	if UseGridDrivers(size) {
-		return NvidiaGridDriverVersion
-	}
-	if isStandardNCv1(size) {
-		return Nvidia470CudaDriverVersion
-	}
-	return NvidiaCudaDriverVersion
-}
+func GetGPUDriverVersion(size string) string { _ = "STUB: not implemented"; return "" }
 
 // GetGPUDriverType returns the type of GPU driver for given VM SKU ("grid" or "cuda")
-func GetGPUDriverType(size string) string {
-	if UseGridDrivers(size) {
-		return "grid"
-	}
-	return "cuda"
-}
+func GetGPUDriverType(size string) string { _ = "STUB: not implemented"; return "" }
 
-func isStandardNCv1(size string) bool {
-	tmp := strings.ToLower(size)
-	return strings.HasPrefix(tmp, "standard_nc") && !strings.Contains(tmp, "_v")
-}
+func isStandardNCv1(size string) bool { _ = "STUB: not implemented"; return false }
 
-func UseGridDrivers(size string) bool {
-	return ConvergedGPUDriverSizes[strings.ToLower(size)]
-}
+func UseGridDrivers(size string) bool { _ = "STUB: not implemented"; return false }
 
 /* ConvergedGPUDriverSizes : these sizes use a "converged" driver to support both cuda/grid workloads.
 how do you figure this out? ask HPC or find out by trial and error.
@@ -160,50 +106,25 @@ var ConvergedGPUDriverSizes = map[string]bool{
 }
 
 // normalizeVMSize applies standard normalization: lowercase and trim _promo suffix
-func normalizeVMSize(vmSize string) string {
-	vmSize = strings.ToLower(vmSize)
-	vmSize = strings.TrimSuffix(vmSize, "_promo")
-	return vmSize
-}
+func normalizeVMSize(vmSize string) string { _ = "STUB: not implemented"; return "" }
 
 // IsGPUSKU determines if a VM SKU is a known GPU SKU (any vendor: nvidia, amd, etc.)
-func IsGPUSKU(vmSize string) bool {
-	vmSize = normalizeVMSize(vmSize)
-	_, ok := allGPUSKUs[vmSize]
-	return ok
-}
+func IsGPUSKU(vmSize string) bool { _ = "STUB: not implemented"; return false }
 
 // IsAMDEnabledSKU determines if a VM SKU is an AMD GPU SKU
-func IsAMDEnabledSKU(vmSize string) bool {
-	vmSize = normalizeVMSize(vmSize)
-	return amdEnabledSKUs[vmSize]
-}
+func IsAMDEnabledSKU(vmSize string) bool { _ = "STUB: not implemented"; return false }
 
 // GetGPUManufacturer returns the GPU manufacturer for a VM SKU ("nvidia", "amd", or "")
-func GetGPUManufacturer(vmSize string) string {
-	vmSize = normalizeVMSize(vmSize)
-	return allGPUSKUs[vmSize]
-}
+func GetGPUManufacturer(vmSize string) string { _ = "STUB: not implemented"; return "" }
 
 // IsDriverInstallSupported returns true if the system knows how to install
 // GPU drivers for this VM SKU. Currently all NVIDIA SKUs have driver installation
 // support, while AMD SKUs do not. This is the single abstraction point for this
 // decision — when AMD driver support is added, only this function needs to change.
-func IsDriverInstallSupported(vmSize string) bool {
-	return IsNvidiaEnabledSKU(vmSize)
-}
+func IsDriverInstallSupported(vmSize string) bool { _ = "STUB: not implemented"; return false }
 
 // IsGPUSKUSupportedOnOS checks if a GPU SKU supports a given OS identifier (e.g., "ubuntu", "azurelinux", "azurelinux3")
 func IsGPUSKUSupportedOnOS(vmSize string, osName string) bool {
-	vmSize = normalizeVMSize(vmSize)
-	osList, ok := gpuSKUOSSupport[vmSize]
-	if !ok {
-		return false
-	}
-	for _, os := range osList {
-		if os == osName {
-			return true
-		}
-	}
+	_ = "STUB: not implemented"
 	return false
 }

@@ -18,14 +18,10 @@ package offerings
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/Azure/karpenter-provider-azure/pkg/cache"
-	"github.com/Azure/karpenter-provider-azure/pkg/utils/zones"
 	"github.com/Azure/skewer"
-	karpv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 	corecloudprovider "sigs.k8s.io/karpenter/pkg/cloudprovider"
 )
 
@@ -81,13 +77,8 @@ func markOfferingsUnavailableForCapacityTypeAndPlacement(
 	reason string,
 	ttl time.Duration,
 ) {
-	selectedPlacementScope := zones.PlacementScopeForZone(zone)
-	for _, offering := range instanceType.Offerings {
-		if getOfferingCapacityType(offering) != capacityType || zones.PlacementScopeForOffering(offering) != selectedPlacementScope {
-			continue
-		}
-		unavailableOfferings.MarkUnavailableWithTTL(ctx, reason, sku, getOfferingZone(offering), capacityType, ttl)
-	}
+	_ = "STUB: not implemented"
+	return
 }
 
 // markOfferingsUnavailableForPlacementForBothCapacityTypes marks every offering
@@ -103,19 +94,8 @@ func markOfferingsUnavailableForPlacementForBothCapacityTypes(
 	reason string,
 	ttl time.Duration,
 ) {
-	selectedPlacementScope := zones.PlacementScopeForZone(zone)
-	zonesToBlock := make(map[string]struct{})
-	for _, offering := range instanceType.Offerings {
-		if zones.PlacementScopeForOffering(offering) != selectedPlacementScope {
-			continue
-		}
-		offeringZone := getOfferingZone(offering)
-		zonesToBlock[offeringZone] = struct{}{}
-	}
-	for blockedZone := range zonesToBlock {
-		unavailableOfferings.MarkUnavailableWithTTL(ctx, reason, sku, blockedZone, karpv1.CapacityTypeOnDemand, ttl)
-		unavailableOfferings.MarkUnavailableWithTTL(ctx, reason, sku, blockedZone, karpv1.CapacityTypeSpot, ttl)
-	}
+	_ = "STUB: not implemented"
+	return
 }
 
 // markAllPlacementsUnavailableForBothCapacityTypes marks every placement for
@@ -129,15 +109,8 @@ func markAllPlacementsUnavailableForBothCapacityTypes(
 	reason string,
 	ttl time.Duration,
 ) {
-	zonesToBlock := make(map[string]struct{})
-	for _, offering := range instanceType.Offerings {
-		offeringZone := getOfferingZone(offering)
-		zonesToBlock[offeringZone] = struct{}{}
-	}
-	for blockedZone := range zonesToBlock {
-		unavailableOfferings.MarkUnavailableWithTTL(ctx, reason, sku, blockedZone, karpv1.CapacityTypeOnDemand, ttl)
-		unavailableOfferings.MarkUnavailableWithTTL(ctx, reason, sku, blockedZone, karpv1.CapacityTypeSpot, ttl)
-	}
+	_ = "STUB: not implemented"
+	return
 }
 
 func handleLowPriorityQuotaError(
@@ -150,9 +123,9 @@ func handleLowPriorityQuotaError(
 	errorCode,
 	errorMessage string,
 ) error {
+	_ = "STUB: not implemented"
 	// Mark in cache that spot quota has been reached for this subscription
-	unavailableOfferings.MarkSpotUnavailableWithTTL(ctx, SubscriptionQuotaReachedTTL)
-	return fmt.Errorf("this subscription has reached the regional vCPU quota for spot (LowPriorityQuota). To scale beyond this limit, please review the quota increase process here: https://docs.microsoft.com/en-us/azure/azure-portal/supportability/low-priority-quota")
+	return nil
 }
 
 func handleSKUFamilyQuotaError(
@@ -165,23 +138,14 @@ func handleSKUFamilyQuotaError(
 	errorCode,
 	errorMessage string,
 ) error {
+	_ = "STUB: not implemented"
 	// Subscription quota has been reached for this VM SKU, mark the instance type as unavailable in all zones available to the offering
 	// This will also update the TTL for an existing offering in the cache that is already unavailable
-
-	for _, offering := range instanceType.Offerings {
-		if getOfferingCapacityType(offering) != capacityType {
-			continue
-		}
-		// If we have a quota limit of 0 vcpus, we mark the offerings unavailable for an hour.
-		// CPU limits of 0 are usually due to a subscription having no allocated quota for that instance type at all on the subscription.
-		if cpuLimitIsZero(errorMessage) {
-			unavailableOfferings.MarkUnavailableWithTTL(ctx, SubscriptionQuotaReachedReason, sku, getOfferingZone(offering), capacityType, SubscriptionQuotaReachedTTL)
-		} else {
-			unavailableOfferings.MarkUnavailableWithTTL(ctx, SubscriptionQuotaReachedReason, sku, getOfferingZone(offering), capacityType, LowQuotaTTL)
-		}
-	}
-	return fmt.Errorf("subscription level %s vCPU quota for %s has been reached (may try provision an alternative instance type)", capacityType, instanceType.Name)
+	return nil
 }
+
+// If we have a quota limit of 0 vcpus, we mark the offerings unavailable for an hour.
+// CPU limits of 0 are usually due to a subscription having no allocated quota for that instance type at all on the subscription.
 
 func handleSKUNotAvailableError(
 	ctx context.Context,
@@ -193,22 +157,16 @@ func handleSKUNotAvailableError(
 	errorCode,
 	errorMessage string,
 ) error {
+	_ = "STUB: not implemented"
 	// https://aka.ms/azureskunotavailable: either not available for a location or zone, or out of capacity for Spot.
 	// We only expect to observe the Spot case, not location or zone restrictions, because:
 	// - SKUs with location restriction are already filtered out via sku.HasLocationRestriction
 	// - zonal restrictions are filtered out internally by sku.AvailabilityZones, and don't get offerings
-	skuNotAvailableTTL := SKUNotAvailableSpotTTL
-	if capacityType == karpv1.CapacityTypeOnDemand { // should not happen, defensive check
-		skuNotAvailableTTL = SKUNotAvailableOnDemandTTL // still mark all offerings as unavailable, but with a longer TTL
-	}
-	markOfferingsUnavailableForCapacityTypeAndPlacement(ctx, unavailableOfferings, sku, instanceType, zone, capacityType, SKUNotAvailableReason, skuNotAvailableTTL)
-
-	return fmt.Errorf(
-		"the requested SKU is unavailable for instance type %s in zone %s with capacity type %s, for more details please visit: https://aka.ms/azureskunotavailable",
-		instanceType.Name,
-		zone,
-		capacityType)
+	return nil
 }
+
+// should not happen, defensive check
+// still mark all offerings as unavailable, but with a longer TTL
 
 // For zonal allocation failure, we will mark all instance types from this SKU family that have >= CPU count as the one that hit the error in this zone
 func handleZonalAllocationFailureError(
@@ -221,10 +179,8 @@ func handleZonalAllocationFailureError(
 	errorCode,
 	errorMessage string,
 ) error {
-	unavailableOfferings.MarkUnavailableWithTTL(ctx, ZonalAllocationFailureReason, sku, zone, karpv1.CapacityTypeOnDemand, AllocationFailureTTL)
-	unavailableOfferings.MarkUnavailableWithTTL(ctx, ZonalAllocationFailureReason, sku, zone, karpv1.CapacityTypeSpot, AllocationFailureTTL)
-
-	return fmt.Errorf("unable to allocate resources in the selected zone (%s). (will try a different zone to fulfill your request)", zone)
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // AllocationFailure means that VM allocation to the dedicated host has failed. But it can also mean "Allocation failed. We do not have sufficient capacity for the requested VM size in this region."
@@ -246,9 +202,8 @@ func handleAllocationFailureError(
 	errorCode,
 	errorMessage string,
 ) error {
-	markOfferingsUnavailableForPlacementForBothCapacityTypes(ctx, unavailableOfferings, sku, instanceType, zone, AllocationFailureReason, AllocationFailureTTL)
-
-	return fmt.Errorf("unable to allocate resources with selected VM size (%s). (will try a different VM size to fulfill your request)", instanceType.Name)
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // OverconstrainedZonalAllocationFailure means that specific zone cannot accommodate the selected size and capacity combination.
@@ -262,10 +217,9 @@ func handleOverconstrainedZonalAllocationFailureError(
 	errorCode,
 	errorMessage string,
 ) error {
+	_ = "STUB: not implemented"
 	// OverconstrainedZonalAllocationFailure means that specific zone cannot accommodate the selected size and capacity combination.
-	unavailableOfferings.MarkUnavailableWithTTL(ctx, OverconstrainedZonalAllocationFailureReason, sku, zone, capacityType, AllocationFailureTTL)
-
-	return fmt.Errorf("unable to allocate resources in the selected zone (%s) with %s capacity type and %s VM size. (will try a different zone, capacity type or VM size to fulfill your request)", zone, capacityType, instanceType.Name)
+	return nil
 }
 
 // OverconstrainedAllocationFailure means that all zones cannot accommodate the selected size and capacity combination.
@@ -279,9 +233,8 @@ func handleOverconstrainedAllocationFailureError(
 	errorCode,
 	errorMessage string,
 ) error {
-	markOfferingsUnavailableForCapacityTypeAndPlacement(ctx, unavailableOfferings, sku, instanceType, zone, capacityType, OverconstrainedAllocationFailureReason, AllocationFailureTTL)
-
-	return fmt.Errorf("unable to allocate resources in all zones with %s capacity type and %s VM size. (will try a different capacity type or VM size to fulfill your request)", capacityType, instanceType.Name)
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func handleRegionalQuotaError(
@@ -294,13 +247,9 @@ func handleRegionalQuotaError(
 	errorCode,
 	errorMessage string,
 ) error {
+	_ = "STUB: not implemented"
 	// InsufficientCapacityError is appropriate here because trying any other instance type will not help
-	return corecloudprovider.NewInsufficientCapacityError(
-		fmt.Errorf(
-			"regional %s vCPU quota limit for subscription has been reached. To scale beyond this limit, please review the quota increase process here: https://learn.microsoft.com/en-us/azure/quotas/regional-quota-requests",
-			capacityType))
+	return nil
 }
 
-func cpuLimitIsZero(errorMessage string) bool {
-	return strings.Contains(errorMessage, "Current Limit: 0")
-}
+func cpuLimitIsZero(errorMessage string) bool { _ = "STUB: not implemented"; return false }

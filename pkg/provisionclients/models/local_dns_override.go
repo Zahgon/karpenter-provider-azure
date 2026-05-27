@@ -24,10 +24,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
 )
 
 // LocalDNSOverride Overrides for localDNS profile.
@@ -67,31 +64,7 @@ type LocalDNSOverride struct {
 
 // Validate validates this local DNS override
 func (m *LocalDNSOverride) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateForwardDestination(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateForwardPolicy(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateProtocol(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateQueryLogging(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateServeStale(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
@@ -118,24 +91,18 @@ const (
 
 // prop value enum
 func (m *LocalDNSOverride) validateForwardDestinationEnum(path, location string, value string) error {
-	if err := validate.EnumCase(path, location, value, localDnsOverrideTypeForwardDestinationPropEnum, true); err != nil {
-		return err
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *LocalDNSOverride) validateForwardDestination(formats strfmt.Registry) error {
-	if swag.IsZero(m.ForwardDestination) { // not required
-		return nil
-	}
-
-	// value enum
-	if err := m.validateForwardDestinationEnum("forwardDestination", "body", *m.ForwardDestination); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
+
+// value enum
 
 var localDnsOverrideTypeForwardPolicyPropEnum []any
 
@@ -163,24 +130,18 @@ const (
 
 // prop value enum
 func (m *LocalDNSOverride) validateForwardPolicyEnum(path, location string, value string) error {
-	if err := validate.EnumCase(path, location, value, localDnsOverrideTypeForwardPolicyPropEnum, true); err != nil {
-		return err
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *LocalDNSOverride) validateForwardPolicy(formats strfmt.Registry) error {
-	if swag.IsZero(m.ForwardPolicy) { // not required
-		return nil
-	}
-
-	// value enum
-	if err := m.validateForwardPolicyEnum("forwardPolicy", "body", *m.ForwardPolicy); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
+
+// value enum
 
 var localDnsOverrideTypeProtocolPropEnum []any
 
@@ -205,24 +166,17 @@ const (
 
 // prop value enum
 func (m *LocalDNSOverride) validateProtocolEnum(path, location string, value string) error {
-	if err := validate.EnumCase(path, location, value, localDnsOverrideTypeProtocolPropEnum, true); err != nil {
-		return err
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *LocalDNSOverride) validateProtocol(formats strfmt.Registry) error {
-	if swag.IsZero(m.Protocol) { // not required
-		return nil
-	}
-
-	// value enum
-	if err := m.validateProtocolEnum("protocol", "body", *m.Protocol); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
+	// not required
 }
+
+// value enum
 
 var localDnsOverrideTypeQueryLoggingPropEnum []any
 
@@ -247,24 +201,18 @@ const (
 
 // prop value enum
 func (m *LocalDNSOverride) validateQueryLoggingEnum(path, location string, value string) error {
-	if err := validate.EnumCase(path, location, value, localDnsOverrideTypeQueryLoggingPropEnum, true); err != nil {
-		return err
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *LocalDNSOverride) validateQueryLogging(formats strfmt.Registry) error {
-	if swag.IsZero(m.QueryLogging) { // not required
-		return nil
-	}
-
-	// value enum
-	if err := m.validateQueryLoggingEnum("queryLogging", "body", *m.QueryLogging); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
+
+// value enum
 
 var localDnsOverrideTypeServeStalePropEnum []any
 
@@ -292,44 +240,31 @@ const (
 
 // prop value enum
 func (m *LocalDNSOverride) validateServeStaleEnum(path, location string, value string) error {
-	if err := validate.EnumCase(path, location, value, localDnsOverrideTypeServeStalePropEnum, true); err != nil {
-		return err
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *LocalDNSOverride) validateServeStale(formats strfmt.Registry) error {
-	if swag.IsZero(m.ServeStale) { // not required
-		return nil
-	}
-
-	// value enum
-	if err := m.validateServeStaleEnum("serveStale", "body", *m.ServeStale); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
+
+// value enum
 
 // ContextValidate validates this local DNS override based on context it is used
 func (m *LocalDNSOverride) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	_ = "STUB: not implemented"
+
+	// MarshalBinary interface implementation
 	return nil
 }
 
-// MarshalBinary interface implementation
 func (m *LocalDNSOverride) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 // UnmarshalBinary interface implementation
-func (m *LocalDNSOverride) UnmarshalBinary(b []byte) error {
-	var res LocalDNSOverride
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
+func (m *LocalDNSOverride) UnmarshalBinary(b []byte) error { _ = "STUB: not implemented"; return nil }

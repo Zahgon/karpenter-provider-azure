@@ -17,7 +17,6 @@ limitations under the License.
 package utils
 
 import (
-	"github.com/samber/lo"
 	corev1 "k8s.io/api/core/v1"
 	karpv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 )
@@ -25,17 +24,8 @@ import (
 // ExtractTaints returns the general taints and startup taints from a NodeClaim,
 // ensuring that UnregisteredNoExecuteTaint is present in startup taints.
 func ExtractTaints(nodeClaim *karpv1.NodeClaim) (generalTaints, startupTaints []corev1.Taint) {
-	generalTaints = nodeClaim.Spec.Taints
-	startupTaints = nodeClaim.Spec.StartupTaints
-
-	allTaints := lo.Flatten([][]corev1.Taint{generalTaints, startupTaints})
-
-	// Ensure UnregisteredNoExecuteTaint is present
-	if _, found := lo.Find(allTaints, func(t corev1.Taint) bool {
-		return t.MatchTaint(&karpv1.UnregisteredNoExecuteTaint)
-	}); !found {
-		startupTaints = append(startupTaints, karpv1.UnregisteredNoExecuteTaint)
-	}
-
-	return generalTaints, startupTaints
+	_ = "STUB: not implemented"
+	return nil, nil
 }
+
+// Ensure UnregisteredNoExecuteTaint is present

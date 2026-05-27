@@ -21,11 +21,6 @@ package operations
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"encoding/json"
-	stderrors "errors"
-	"fmt"
-	"io"
-
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 
@@ -39,29 +34,12 @@ type NodeBootstrappingGetReader struct {
 
 // ReadResponse reads a server response into the received o.
 func (o *NodeBootstrappingGetReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (any, error) {
-	switch response.Code() {
-	case 200:
-		result := NewNodeBootstrappingGetOK()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return result, nil
-	default:
-		result := NewNodeBootstrappingGetDefault(response.Code())
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		if response.Code()/100 == 2 {
-			return result, nil
-		}
-		return nil, result
-	}
+	_ = "STUB: not implemented"
+	return *new(any), nil
 }
 
 // NewNodeBootstrappingGetOK creates a NodeBootstrappingGetOK with default headers values
-func NewNodeBootstrappingGetOK() *NodeBootstrappingGetOK {
-	return &NodeBootstrappingGetOK{}
-}
+func NewNodeBootstrappingGetOK() *NodeBootstrappingGetOK { _ = "STUB: not implemented"; return nil }
 
 /*
 NodeBootstrappingGetOK describes a response with status code 200, with default header values.
@@ -74,65 +52,62 @@ type NodeBootstrappingGetOK struct {
 
 // IsSuccess returns true when this node bootstrapping get o k response has a 2xx status code
 func (o *NodeBootstrappingGetOK) IsSuccess() bool {
-	return true
+	_ = "STUB: not implemented"
+
+	// IsRedirect returns true when this node bootstrapping get o k response has a 3xx status code
+	return false
 }
 
-// IsRedirect returns true when this node bootstrapping get o k response has a 3xx status code
 func (o *NodeBootstrappingGetOK) IsRedirect() bool {
+	_ = "STUB: not implemented"
+
+	// IsClientError returns true when this node bootstrapping get o k response has a 4xx status code
 	return false
 }
 
-// IsClientError returns true when this node bootstrapping get o k response has a 4xx status code
 func (o *NodeBootstrappingGetOK) IsClientError() bool {
+	_ = "STUB: not implemented"
+
+	// IsServerError returns true when this node bootstrapping get o k response has a 5xx status code
 	return false
 }
 
-// IsServerError returns true when this node bootstrapping get o k response has a 5xx status code
 func (o *NodeBootstrappingGetOK) IsServerError() bool {
+	_ = "STUB: not implemented"
+
+	// IsCode returns true when this node bootstrapping get o k response a status code equal to that given
 	return false
 }
 
-// IsCode returns true when this node bootstrapping get o k response a status code equal to that given
 func (o *NodeBootstrappingGetOK) IsCode(code int) bool {
-	return code == 200
+	_ = "STUB: not implemented"
+
+	// Code gets the status code for the node bootstrapping get o k response
+	return false
 }
 
-// Code gets the status code for the node bootstrapping get o k response
-func (o *NodeBootstrappingGetOK) Code() int {
-	return 200
-}
+func (o *NodeBootstrappingGetOK) Code() int { _ = "STUB: not implemented"; return 0 }
 
-func (o *NodeBootstrappingGetOK) Error() string {
-	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerService/managedclusters/{resourceName}/nodeBootstrapping][%d] nodeBootstrappingGetOK %s", 200, payload)
-}
+func (o *NodeBootstrappingGetOK) Error() string { _ = "STUB: not implemented"; return "" }
 
-func (o *NodeBootstrappingGetOK) String() string {
-	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerService/managedclusters/{resourceName}/nodeBootstrapping][%d] nodeBootstrappingGetOK %s", 200, payload)
-}
+func (o *NodeBootstrappingGetOK) String() string { _ = "STUB: not implemented"; return "" }
 
 func (o *NodeBootstrappingGetOK) GetPayload() *models.NodeBootstrapping {
-	return o.Payload
-}
-
-func (o *NodeBootstrappingGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.NodeBootstrapping)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
+func (o *NodeBootstrappingGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+	_ = "STUB: not implemented"
+	return nil
+}
+
+// response payload
+
 // NewNodeBootstrappingGetDefault creates a NodeBootstrappingGetDefault with default headers values
 func NewNodeBootstrappingGetDefault(code int) *NodeBootstrappingGetDefault {
-	return &NodeBootstrappingGetDefault{
-		_statusCode: code,
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 /*
@@ -147,46 +122,29 @@ type NodeBootstrappingGetDefault struct {
 }
 
 // IsSuccess returns true when this node bootstrapping get default response has a 2xx status code
-func (o *NodeBootstrappingGetDefault) IsSuccess() bool {
-	return o._statusCode/100 == 2
-}
+func (o *NodeBootstrappingGetDefault) IsSuccess() bool { _ = "STUB: not implemented"; return false }
 
 // IsRedirect returns true when this node bootstrapping get default response has a 3xx status code
-func (o *NodeBootstrappingGetDefault) IsRedirect() bool {
-	return o._statusCode/100 == 3
-}
+func (o *NodeBootstrappingGetDefault) IsRedirect() bool { _ = "STUB: not implemented"; return false }
 
 // IsClientError returns true when this node bootstrapping get default response has a 4xx status code
-func (o *NodeBootstrappingGetDefault) IsClientError() bool {
-	return o._statusCode/100 == 4
-}
+func (o *NodeBootstrappingGetDefault) IsClientError() bool { _ = "STUB: not implemented"; return false }
 
 // IsServerError returns true when this node bootstrapping get default response has a 5xx status code
-func (o *NodeBootstrappingGetDefault) IsServerError() bool {
-	return o._statusCode/100 == 5
-}
+func (o *NodeBootstrappingGetDefault) IsServerError() bool { _ = "STUB: not implemented"; return false }
 
 // IsCode returns true when this node bootstrapping get default response a status code equal to that given
 func (o *NodeBootstrappingGetDefault) IsCode(code int) bool {
-	return o._statusCode == code
+	_ = "STUB: not implemented"
+	return false
+
+	// Code gets the status code for the node bootstrapping get default response
 }
 
-// Code gets the status code for the node bootstrapping get default response
-func (o *NodeBootstrappingGetDefault) Code() int {
-	return o._statusCode
-}
+func (o *NodeBootstrappingGetDefault) Code() int { _ = "STUB: not implemented"; return 0 }
 
-func (o *NodeBootstrappingGetDefault) Error() string {
-	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerService/managedclusters/{resourceName}/nodeBootstrapping][%d] NodeBootstrapping_Get default %s", o._statusCode, payload)
-}
+func (o *NodeBootstrappingGetDefault) Error() string { _ = "STUB: not implemented"; return "" }
 
-func (o *NodeBootstrappingGetDefault) String() string {
-	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerService/managedclusters/{resourceName}/nodeBootstrapping][%d] NodeBootstrapping_Get default %s", o._statusCode, payload)
-}
+func (o *NodeBootstrappingGetDefault) String() string { _ = "STUB: not implemented"; return "" }
 
-func (o *NodeBootstrappingGetDefault) GetPayload() string {
-	return o.Payload
-}
-
+func (o *NodeBootstrappingGetDefault) GetPayload() string { _ = "STUB: not implemented"; return "" }

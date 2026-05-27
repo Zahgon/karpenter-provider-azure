@@ -18,47 +18,20 @@ package instance
 
 import (
 	"context"
-	"fmt"
 
 	arg "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/azclient/azapi"
-	"github.com/samber/lo"
 )
 
 func NewQueryRequest(subscriptionID *string, query string) *arg.QueryRequest {
-	return &arg.QueryRequest{
-		Query: &query,
-		Options: &arg.QueryRequestOptions{
-			ResultFormat: lo.ToPtr(arg.ResultFormatObjectArray),
-		},
-		Subscriptions: []*string{subscriptionID},
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // Queries Azure Resource Graph using Resources() and returns a list of all pages of data.
 func GetResourceData(ctx context.Context, client azapi.AzureResourceGraphAPI, req arg.QueryRequest) ([]Resource, error) {
-	dataRemaining := true // used to handle ARG responses > 1 page long
-	var data []Resource
-	for dataRemaining {
-		resp, err := client.Resources(ctx, req, nil)
-		if err != nil {
-			return nil, err
-		}
-		interfaceArray, ok := resp.Data.([]interface{})
-		if !ok {
-			return nil, fmt.Errorf("type casting query response as interface array failed")
-		}
-		for i := range interfaceArray {
-			switch resource := interfaceArray[i].(type) {
-			case map[string]interface{}:
-				data = append(data, resource)
-			}
-		}
-		dataRemaining = false
-		if resp.SkipToken != nil {
-			req.Options.SkipToken = resp.SkipToken
-			dataRemaining = true
-		}
-	}
-	return data, nil
+	_ = "STUB: not implemented"
+	return nil,
+		// used to handle ARG responses > 1 page long
+		nil
 }

@@ -21,13 +21,9 @@ import (
 	"sync"
 
 	"github.com/awslabs/operatorpkg/controller"
-	"github.com/samber/lo"
 	"k8s.io/client-go/rest"
-	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 type Monitor struct {
@@ -38,42 +34,19 @@ type Monitor struct {
 }
 
 func New(ctx context.Context, config *rest.Config, kubeClient client.Client) *Monitor {
-	log.SetLogger(log.FromContext(ctx))
-	mgr := lo.Must(controllerruntime.NewManager(config, controllerruntime.Options{
-		Metrics: server.Options{
-			BindAddress: "0",
-		},
-	}))
-	for _, c := range newControllers(kubeClient) {
-		lo.Must0(c.Register(ctx, mgr), "failed to register controller")
-	}
-	ctx, cancel := context.WithCancel(ctx) // this context is only meant for monitor start/stop
-	return &Monitor{
-		ctx:    ctx,
-		cancel: cancel,
-		mgr:    mgr,
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
+
+// this context is only meant for monitor start/stop
 
 // MustStart starts the debug monitor
-func (m *Monitor) MustStart() {
-	m.wg.Add(1)
-	go func() {
-		defer m.wg.Done()
-		lo.Must0(m.mgr.Start(m.ctx))
-	}()
-}
+func (m *Monitor) MustStart() { _ = "STUB: not implemented"; return }
 
 // Stop stops the monitor
-func (m *Monitor) Stop() {
-	m.cancel()
-	m.wg.Wait()
-}
+func (m *Monitor) Stop() { _ = "STUB: not implemented"; return }
 
 func newControllers(kubeClient client.Client) []controller.Controller {
-	return []controller.Controller{
-		NewNodeClaimController(kubeClient),
-		NewNodeController(kubeClient),
-		NewPodController(kubeClient),
-	}
+	_ = "STUB: not implemented"
+	return nil
 }

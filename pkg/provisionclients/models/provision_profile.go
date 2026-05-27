@@ -22,12 +22,8 @@ package models
 
 import (
 	"context"
-	stderrors "errors"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
 )
 
 // ProvisionProfile provision profile
@@ -131,586 +127,179 @@ type ProvisionProfile struct {
 
 // Validate validates this provision profile
 func (m *ProvisionProfile) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateAgentPoolWindowsProfile(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateArchitecture(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateArtifactStreamingProfile(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateCustomKubeletConfig(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateCustomLinuxOSConfig(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateDistro(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateGpuProfile(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateLocalDNSProfile(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateMaxPods(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateMode(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateName(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateOrchestratorVersion(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateOsSku(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateOsType(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateSecurityProfile(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateStorageProfile(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateVMSize(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateVnetCidrs(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateVnetSubnetID(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *ProvisionProfile) validateAgentPoolWindowsProfile(formats strfmt.Registry) error {
-	if swag.IsZero(m.AgentPoolWindowsProfile) { // not required
-		return nil
-	}
-
-	if m.AgentPoolWindowsProfile != nil {
-		if err := m.AgentPoolWindowsProfile.Validate(formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("agentPoolWindowsProfile")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("agentPoolWindowsProfile")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
+// not required
+
 func (m *ProvisionProfile) validateArchitecture(formats strfmt.Registry) error {
-
-	if err := validate.Required("architecture", "body", m.Architecture); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *ProvisionProfile) validateArtifactStreamingProfile(formats strfmt.Registry) error {
-	if swag.IsZero(m.ArtifactStreamingProfile) { // not required
-		return nil
-	}
-
-	if m.ArtifactStreamingProfile != nil {
-		if err := m.ArtifactStreamingProfile.Validate(formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("artifactStreamingProfile")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("artifactStreamingProfile")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
 
 func (m *ProvisionProfile) validateCustomKubeletConfig(formats strfmt.Registry) error {
-	if swag.IsZero(m.CustomKubeletConfig) { // not required
-		return nil
-	}
-
-	if m.CustomKubeletConfig != nil {
-		if err := m.CustomKubeletConfig.Validate(formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("customKubeletConfig")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("customKubeletConfig")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
 
 func (m *ProvisionProfile) validateCustomLinuxOSConfig(formats strfmt.Registry) error {
-	if swag.IsZero(m.CustomLinuxOSConfig) { // not required
-		return nil
-	}
-
-	if m.CustomLinuxOSConfig != nil {
-		if err := m.CustomLinuxOSConfig.Validate(formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("customLinuxOSConfig")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("customLinuxOSConfig")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
+// not required
+
 func (m *ProvisionProfile) validateDistro(formats strfmt.Registry) error {
-
-	if err := validate.Required("distro", "body", m.Distro); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *ProvisionProfile) validateGpuProfile(formats strfmt.Registry) error {
-	if swag.IsZero(m.GpuProfile) { // not required
-		return nil
-	}
-
-	if m.GpuProfile != nil {
-		if err := m.GpuProfile.Validate(formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("gpuProfile")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("gpuProfile")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
 
 func (m *ProvisionProfile) validateLocalDNSProfile(formats strfmt.Registry) error {
-	if swag.IsZero(m.LocalDNSProfile) { // not required
-		return nil
-	}
-
-	if m.LocalDNSProfile != nil {
-		if err := m.LocalDNSProfile.Validate(formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("localDNSProfile")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("localDNSProfile")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
+// not required
+
 func (m *ProvisionProfile) validateMaxPods(formats strfmt.Registry) error {
-
-	if err := validate.Required("maxPods", "body", m.MaxPods); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *ProvisionProfile) validateMode(formats strfmt.Registry) error {
-
-	if err := validate.Required("mode", "body", m.Mode); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *ProvisionProfile) validateName(formats strfmt.Registry) error {
-
-	if err := validate.Required("name", "body", m.Name); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *ProvisionProfile) validateOrchestratorVersion(formats strfmt.Registry) error {
-
-	if err := validate.Required("orchestratorVersion", "body", m.OrchestratorVersion); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *ProvisionProfile) validateOsSku(formats strfmt.Registry) error {
-
-	if err := validate.Required("osSku", "body", m.OsSku); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *ProvisionProfile) validateOsType(formats strfmt.Registry) error {
-
-	if err := validate.Required("osType", "body", m.OsType); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *ProvisionProfile) validateSecurityProfile(formats strfmt.Registry) error {
-	if swag.IsZero(m.SecurityProfile) { // not required
-		return nil
-	}
-
-	if m.SecurityProfile != nil {
-		if err := m.SecurityProfile.Validate(formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("securityProfile")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("securityProfile")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
+// not required
+
 func (m *ProvisionProfile) validateStorageProfile(formats strfmt.Registry) error {
-
-	if err := validate.Required("storageProfile", "body", m.StorageProfile); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *ProvisionProfile) validateVMSize(formats strfmt.Registry) error {
-
-	if err := validate.Required("vmSize", "body", m.VMSize); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *ProvisionProfile) validateVnetCidrs(formats strfmt.Registry) error {
-
-	if err := validate.Required("vnetCidrs", "body", m.VnetCidrs); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *ProvisionProfile) validateVnetSubnetID(formats strfmt.Registry) error {
-
-	if err := validate.Required("vnetSubnetID", "body", m.VnetSubnetID); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 // ContextValidate validate this provision profile based on the context it is used
 func (m *ProvisionProfile) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.contextValidateAgentPoolWindowsProfile(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateArtifactStreamingProfile(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateCustomKubeletConfig(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateCustomLinuxOSConfig(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateGpuProfile(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateLocalDNSProfile(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateSecurityProfile(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *ProvisionProfile) contextValidateAgentPoolWindowsProfile(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.AgentPoolWindowsProfile != nil {
-
-		if swag.IsZero(m.AgentPoolWindowsProfile) { // not required
-			return nil
-		}
-
-		if err := m.AgentPoolWindowsProfile.ContextValidate(ctx, formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("agentPoolWindowsProfile")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("agentPoolWindowsProfile")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
 
 func (m *ProvisionProfile) contextValidateArtifactStreamingProfile(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.ArtifactStreamingProfile != nil {
-
-		if swag.IsZero(m.ArtifactStreamingProfile) { // not required
-			return nil
-		}
-
-		if err := m.ArtifactStreamingProfile.ContextValidate(ctx, formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("artifactStreamingProfile")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("artifactStreamingProfile")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
 
 func (m *ProvisionProfile) contextValidateCustomKubeletConfig(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.CustomKubeletConfig != nil {
-
-		if swag.IsZero(m.CustomKubeletConfig) { // not required
-			return nil
-		}
-
-		if err := m.CustomKubeletConfig.ContextValidate(ctx, formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("customKubeletConfig")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("customKubeletConfig")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
 
 func (m *ProvisionProfile) contextValidateCustomLinuxOSConfig(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.CustomLinuxOSConfig != nil {
-
-		if swag.IsZero(m.CustomLinuxOSConfig) { // not required
-			return nil
-		}
-
-		if err := m.CustomLinuxOSConfig.ContextValidate(ctx, formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("customLinuxOSConfig")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("customLinuxOSConfig")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
 
 func (m *ProvisionProfile) contextValidateGpuProfile(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.GpuProfile != nil {
-
-		if swag.IsZero(m.GpuProfile) { // not required
-			return nil
-		}
-
-		if err := m.GpuProfile.ContextValidate(ctx, formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("gpuProfile")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("gpuProfile")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
 
 func (m *ProvisionProfile) contextValidateLocalDNSProfile(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.LocalDNSProfile != nil {
-
-		if swag.IsZero(m.LocalDNSProfile) { // not required
-			return nil
-		}
-
-		if err := m.LocalDNSProfile.ContextValidate(ctx, formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("localDNSProfile")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("localDNSProfile")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
 
 func (m *ProvisionProfile) contextValidateSecurityProfile(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.SecurityProfile != nil {
-
-		if swag.IsZero(m.SecurityProfile) { // not required
-			return nil
-		}
-
-		if err := m.SecurityProfile.ContextValidate(ctx, formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("securityProfile")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("securityProfile")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
 
 // MarshalBinary interface implementation
 func (m *ProvisionProfile) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 // UnmarshalBinary interface implementation
-func (m *ProvisionProfile) UnmarshalBinary(b []byte) error {
-	var res ProvisionProfile
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
+func (m *ProvisionProfile) UnmarshalBinary(b []byte) error { _ = "STUB: not implemented"; return nil }

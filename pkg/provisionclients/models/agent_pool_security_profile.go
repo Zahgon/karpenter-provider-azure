@@ -24,7 +24,6 @@ import (
 	"context"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
 )
 
 // AgentPoolSecurityProfile agent pool security profile
@@ -44,28 +43,26 @@ type AgentPoolSecurityProfile struct {
 
 // Validate validates this agent pool security profile
 func (m *AgentPoolSecurityProfile) Validate(formats strfmt.Registry) error {
+	_ = "STUB: not implemented"
+
+	// ContextValidate validates this agent pool security profile based on context it is used
 	return nil
 }
 
-// ContextValidate validates this agent pool security profile based on context it is used
 func (m *AgentPoolSecurityProfile) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	_ = "STUB: not implemented"
+
+	// MarshalBinary interface implementation
 	return nil
 }
 
-// MarshalBinary interface implementation
 func (m *AgentPoolSecurityProfile) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 // UnmarshalBinary interface implementation
 func (m *AgentPoolSecurityProfile) UnmarshalBinary(b []byte) error {
-	var res AgentPoolSecurityProfile
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
+	_ = "STUB: not implemented"
 	return nil
 }

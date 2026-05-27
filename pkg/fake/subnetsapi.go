@@ -21,7 +21,6 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/azclient/azapi"
-	"github.com/samber/lo"
 )
 
 type SubnetsAPI struct {
@@ -31,18 +30,8 @@ type SubnetsAPI struct {
 var _ azapi.SubnetsAPI = &SubnetsAPI{}
 
 func (s *SubnetsAPI) Get(ctx context.Context, resourceGroupName string, virtualNetworkName string, subnetName string, options *armnetwork.SubnetsClientGetOptions) (armnetwork.SubnetsClientGetResponse, error) {
-	if s.GetFunc != nil {
-		return s.GetFunc(ctx, resourceGroupName, virtualNetworkName, subnetName, options)
-	}
-	return armnetwork.SubnetsClientGetResponse{
-		Subnet: armnetwork.Subnet{
-			Properties: &armnetwork.SubnetPropertiesFormat{
-				AddressPrefix: lo.ToPtr("10.0.0.0/16"),
-			},
-		},
-	}, nil
+	_ = "STUB: not implemented"
+	return *new(armnetwork.SubnetsClientGetResponse), nil
 }
 
-func (s *SubnetsAPI) Reset() {
-	s.GetFunc = nil
-}
+func (s *SubnetsAPI) Reset() { _ = "STUB: not implemented"; return }

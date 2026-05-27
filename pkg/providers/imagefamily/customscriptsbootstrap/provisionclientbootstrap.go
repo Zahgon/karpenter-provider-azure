@@ -18,20 +18,13 @@ package customscriptsbootstrap
 
 import (
 	"context"
-	"fmt"
-	"math"
-
-	"github.com/samber/lo"
 
 	"github.com/Azure/karpenter-provider-azure/pkg/apis/v1beta1"
-	"github.com/Azure/karpenter-provider-azure/pkg/operator/options"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/imagefamily/bootstrap"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/imagefamily/types"
 	"github.com/Azure/karpenter-provider-azure/pkg/provisionclients/models"
-	"github.com/Azure/karpenter-provider-azure/pkg/utils"
 
 	v1 "k8s.io/api/core/v1"
-	karpv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 	"sigs.k8s.io/karpenter/pkg/cloudprovider"
 )
 
@@ -72,140 +65,40 @@ type ProvisionClientBootstrap struct {
 var _ Bootstrapper = (*ProvisionClientBootstrap)(nil) // assert ProvisionClientBootstrap implements customscriptsbootstrapper
 
 func (p ProvisionClientBootstrap) GetCustomDataAndCSE(ctx context.Context) (string, string, error) {
-	provisionValues, err := p.ConstructProvisionValues(ctx)
-	if err != nil {
-		return "", "", fmt.Errorf("constructProvisionValues failed with error: %w", err)
-	}
-
-	if p.NodeBootstrappingProvider == nil {
-		return "", "", fmt.Errorf("nodeBootstrapping provider is not initialized")
-	}
-	nodeBootstrapping, err := p.NodeBootstrappingProvider.Get(ctx, provisionValues)
-	if err != nil {
-		// As of now we just fail the provisioning given the unlikely scenario of retriable error, but could be revisited along with retriable status on the server side.
-		return "", "", fmt.Errorf("nodeBootstrapping.Get failed with error: %w", err)
-	}
-
-	customDataHydrated, cseHydrated, err := hydrateBootstrapTokenIfNeeded(nodeBootstrapping.CustomDataEncodedDehydratable, nodeBootstrapping.CSEDehydratable, p.KubeletClientTLSBootstrapToken)
-	if err != nil {
-		return "", "", fmt.Errorf("hydrateBootstrapTokenIfNeeded failed with error: %w", err)
-	}
-
-	return customDataHydrated, cseHydrated, nil
+	_ = "STUB: not implemented"
+	return "", "", nil
 }
+
+// As of now we just fail the provisioning given the unlikely scenario of retriable error, but could be revisited along with retriable status on the server side.
 
 // ATTENTION!!!: changes here may NOT be effective on AKS machine nodes (ProvisionModeAKSMachineAPI); See aksmachineinstance.go/aksmachineinstancehelpers.go.
 // Refactoring for code unification is not being invested immediately.
 //
 //nolint:gocyclo
 func (p *ProvisionClientBootstrap) ConstructProvisionValues(ctx context.Context) (*models.ProvisionValues, error) {
-	if p.IsWindows {
-		// TODO(Windows)
-		return nil, fmt.Errorf("windows is not supported")
-	}
+	_ = "STUB: not implemented"
 
-	nodeLabels := lo.Assign(map[string]string{}, p.Labels)
-
-	enableArtifactStreaming := p.ArtifactStreaming.IsEnabled(p.Arch)
-
-	// unspecified FIPSMode is effectively no FIPS for now
-	enableFIPS := lo.FromPtr(p.FIPSMode) == v1beta1.FIPSModeFIPS
-
-	provisionProfile := &models.ProvisionProfile{
-		Name:                     lo.ToPtr(""),
-		Architecture:             lo.ToPtr(lo.Ternary(p.Arch == karpv1.ArchitectureAmd64, "x64", "Arm64")),
-		OsType:                   lo.ToPtr(lo.Ternary(p.IsWindows, models.OSTypeWindows, models.OSTypeLinux)),
-		VMSize:                   lo.ToPtr(p.InstanceType.Name),
-		Distro:                   lo.ToPtr(p.ImageDistro),
-		CustomNodeLabels:         nodeLabels,
-		OrchestratorVersion:      lo.ToPtr(p.KubernetesVersion),
-		VnetSubnetID:             lo.ToPtr(p.SubnetID),
-		StorageProfile:           lo.ToPtr(p.StorageProfile),
-		NodeInitializationTaints: lo.Map(p.StartupTaints, func(taint v1.Taint, _ int) string { return taint.ToString() }),
-		NodeTaints:               lo.Map(p.Taints, func(taint v1.Taint, _ int) string { return taint.ToString() }),
-		SecurityProfile: &models.AgentPoolSecurityProfile{
-			SSHAccess: lo.ToPtr(models.SSHAccessLocalUser),
-			// EnableVTPM:       lo.ToPtr(false), // Unsupported as of now (Trusted launch)
-			// EnableSecureBoot: lo.ToPtr(false), // Unsupported as of now (Trusted launch)
-		},
-		MaxPods: lo.ToPtr(p.KubeletConfig.MaxPods),
-
-		VnetCidrs: []string{}, // Unsupported as of now; TODO(Windows)
-		// MessageOfTheDay:         lo.ToPtr(""),                                    // Unsupported as of now
-		// AgentPoolWindowsProfile: &models.AgentPoolWindowsProfile{},               // Unsupported as of now; TODO(Windows)
-		// KubeletDiskType:         lo.ToPtr(models.KubeletDiskTypeUnspecified),    // Unsupported as of now
-		// CustomLinuxOSConfig:     &models.CustomLinuxOSConfig{},                   // Unsupported as of now (sysctl)
-		CustomLinuxOSConfig: convertLinuxOSConfigToModel(p.LinuxOSConfig),
-		EnableFIPS:          lo.ToPtr(enableFIPS),
-		// GpuInstanceProfile:      lo.ToPtr(models.GPUInstanceProfileUnspecified), // Unsupported as of now (MIG)
-		// WorkloadRuntime:         lo.ToPtr(models.WorkloadRuntimeUnspecified),    // Unsupported as of now (Kata)
-		ArtifactStreamingProfile: &models.ArtifactStreamingProfile{
-			Enabled: lo.ToPtr(enableArtifactStreaming),
-		},
-		LocalDNSProfile: convertLocalDNSToModel(p.LocalDNSProfile),
-	}
-
-	// Map OS SKU to AKS provision client's expectation
-	// Note that the direction forward is to be more specific with OS versions. Be careful when supporting new ones.
-	switch p.OSSKU {
-	// https://go.dev/wiki/Switch#multiple-cases
-	case ImageFamilyOSSKUUbuntu2004, ImageFamilyOSSKUUbuntu2204, ImageFamilyOSSKUUbuntu2404:
-		provisionProfile.OsSku = lo.ToPtr(models.OSSKUUbuntu)
-	case ImageFamilyOSSKUAzureLinux2, ImageFamilyOSSKUAzureLinux3:
-		provisionProfile.OsSku = lo.ToPtr(models.OSSKUAzureLinux)
-	default:
-		return nil, fmt.Errorf("unsupported OSSKU %s", p.OSSKU)
-	}
-
-	if p.KubeletConfig != nil {
-		provisionProfile.CustomKubeletConfig = &models.CustomKubeletConfig{
-			CPUCfsQuota:          p.KubeletConfig.CPUCFSQuota,
-			ImageGcHighThreshold: p.KubeletConfig.ImageGCHighThresholdPercent,
-			ImageGcLowThreshold:  p.KubeletConfig.ImageGCLowThresholdPercent,
-			ContainerLogMaxFiles: p.KubeletConfig.ContainerLogMaxFiles,
-			PodMaxPids:           ConvertPodMaxPids(p.KubeletConfig.PodPidsLimit),
-			FailSwapOn:           p.KubeletConfig.FailSwapOn,
-		}
-
-		if p.KubeletConfig.ContainerLogMaxSize != nil {
-			provisionProfile.CustomKubeletConfig.ContainerLogMaxSizeMB = ConvertContainerLogMaxSizeToMB(*p.KubeletConfig.ContainerLogMaxSize)
-		}
-
-		// NodeClaim defaults don't work somehow and keep giving invalid values. Can be improved later.
-		if p.KubeletConfig.CPUCFSQuotaPeriod.Duration.String() != "0s" {
-			provisionProfile.CustomKubeletConfig.CPUCfsQuotaPeriod = lo.ToPtr(p.KubeletConfig.CPUCFSQuotaPeriod.Duration.String())
-		}
-		if p.KubeletConfig.CPUManagerPolicy != nil && *p.KubeletConfig.CPUManagerPolicy != "" {
-			provisionProfile.CustomKubeletConfig.CPUManagerPolicy = p.KubeletConfig.CPUManagerPolicy
-		}
-		if p.KubeletConfig.TopologyManagerPolicy != nil && *p.KubeletConfig.TopologyManagerPolicy != "" {
-			provisionProfile.CustomKubeletConfig.TopologyManagerPolicy = p.KubeletConfig.TopologyManagerPolicy
-		}
-		if len(p.KubeletConfig.AllowedUnsafeSysctls) > 0 {
-			provisionProfile.CustomKubeletConfig.AllowedUnsafeSysctls = p.KubeletConfig.AllowedUnsafeSysctls
-		}
-	}
-
-	if modeString, ok := p.Labels[v1beta1.AKSLabelMode]; ok && modeString == v1beta1.ModeSystem {
-		provisionProfile.Mode = lo.ToPtr(models.AgentPoolModeSystem)
-	} else {
-		provisionProfile.Mode = lo.ToPtr(models.AgentPoolModeUser)
-	}
-
-	if utils.IsNvidiaEnabledSKU(p.InstanceType.Name) {
-		provisionProfile.GpuProfile = &models.GPUProfile{
-			DriverType:       lo.ToPtr(lo.Ternary(utils.UseGridDrivers(p.InstanceType.Name), models.DriverTypeGRID, models.DriverTypeCUDA)),
-			InstallGPUDriver: lo.ToPtr(p.GPUDriverInstallationEnabled),
-		}
-	}
-
-	provisionHelperValues := &models.ProvisionHelperValues{
-		SkuCPU:    lo.ToPtr(p.InstanceType.Capacity.Cpu().AsApproximateFloat64()),
-		SkuMemory: lo.ToPtr(math.Ceil(reverseVMMemoryOverhead(options.FromContext(ctx).VMMemoryOverheadPercent, p.InstanceType.Capacity.Memory().AsApproximateFloat64()) / 1024 / 1024 / 1024)),
-	}
-
-	return &models.ProvisionValues{
-		ProvisionProfile:      provisionProfile,
-		ProvisionHelperValues: provisionHelperValues,
-	}, nil
+	// TODO(Windows)
+	return nil, nil
 }
+
+// unspecified FIPSMode is effectively no FIPS for now
+
+// EnableVTPM:       lo.ToPtr(false), // Unsupported as of now (Trusted launch)
+// EnableSecureBoot: lo.ToPtr(false), // Unsupported as of now (Trusted launch)
+
+// Unsupported as of now; TODO(Windows)
+// MessageOfTheDay:         lo.ToPtr(""),                                    // Unsupported as of now
+// AgentPoolWindowsProfile: &models.AgentPoolWindowsProfile{},               // Unsupported as of now; TODO(Windows)
+// KubeletDiskType:         lo.ToPtr(models.KubeletDiskTypeUnspecified),    // Unsupported as of now
+// CustomLinuxOSConfig:     &models.CustomLinuxOSConfig{},                   // Unsupported as of now (sysctl)
+
+// GpuInstanceProfile:      lo.ToPtr(models.GPUInstanceProfileUnspecified), // Unsupported as of now (MIG)
+// WorkloadRuntime:         lo.ToPtr(models.WorkloadRuntimeUnspecified),    // Unsupported as of now (Kata)
+
+// Map OS SKU to AKS provision client's expectation
+// Note that the direction forward is to be more specific with OS versions. Be careful when supporting new ones.
+
+// https://go.dev/wiki/Switch#multiple-cases
+
+// NodeClaim defaults don't work somehow and keep giving invalid values. Can be improved later.

@@ -17,9 +17,6 @@ limitations under the License.
 package fake
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
 	"net/http"
 	"time"
 
@@ -45,46 +42,21 @@ type AuxiliaryTokenServer struct {
 
 // NewAuxiliaryTokenServer creates a new AuxiliaryTokenServer with the given token.
 func NewAuxiliaryTokenServer(token string, expiresOn time.Time, refreshOn time.Time) *AuxiliaryTokenServer {
-	return &AuxiliaryTokenServer{
-		Token: azcore.AccessToken{
-			Token:     token,
-			ExpiresOn: expiresOn,
-			RefreshOn: refreshOn,
-		},
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func (c *AuxiliaryTokenServer) SetToken(token string, expiresOn time.Time, refreshOn time.Time) {
-	c.Token = azcore.AccessToken{
-		Token:     token,
-		ExpiresOn: expiresOn,
-		RefreshOn: refreshOn,
-	}
+	_ = "STUB: not implemented"
+	return
 }
 
 // Reset must be called between tests otherwise tests will pollute each other.
-func (c *AuxiliaryTokenServer) Reset() {
-	c.AuxiliaryTokenDoBehavior.Reset()
-}
+func (c *AuxiliaryTokenServer) Reset() { _ = "STUB: not implemented"; return }
 
 func (c *AuxiliaryTokenServer) Do(req *http.Request) (*http.Response, error) {
-	input := &AuxiliaryTokenDoInput{
-		request: req,
-	}
-	return c.AuxiliaryTokenDoBehavior.Invoke(input, func(input *AuxiliaryTokenDoInput) (*http.Response, error) {
-		// init response writer
-		resp := &http.Response{}
-		resp.Header = http.Header{"Content-Type": []string{"application/json"}}
-
-		if input.request.UserAgent() != auth.GetUserAgentExtension() {
-			resp.StatusCode = http.StatusUnauthorized
-			return resp, nil
-		}
-
-		token := c.Token
-		tokenBytes, _ := json.Marshal(token)
-		resp.StatusCode = http.StatusOK
-		resp.Body = io.NopCloser(bytes.NewReader(tokenBytes))
-		return resp, nil
-	})
+	_ = "STUB: not implemented"
+	return nil, nil
 }
+
+// init response writer

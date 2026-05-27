@@ -18,10 +18,7 @@ package fake
 
 import (
 	"context"
-	"fmt"
-	"io"
 	"net/http"
-	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
@@ -64,17 +61,8 @@ var AKSAgentPoolsAPIErrorFromAKSAgentPoolNotFound = &azcore.ResponseError{
 
 // AKSAgentPoolsAPIErrorFromAKSMachineNotFound creates the specific error for when machines cannot be found during delete
 func AKSAgentPoolsAPIErrorFromAKSMachineNotFound(agentPoolName string, validMachines []string) error {
-	message := fmt.Sprintf("Cannot find any valid machines to delete. Please check your input machine names. The valid machines to delete in agent pool '%s' are: %s.",
-		agentPoolName, strings.Join(validMachines, ", "))
-
-	errorBody := fmt.Sprintf(`{"error": {"code": "InvalidParameter", "message": "%s"}}`, message)
-	return &azcore.ResponseError{
-		ErrorCode:  "InvalidParameter",
-		StatusCode: http.StatusBadRequest,
-		RawResponse: &http.Response{
-			Body: io.NopCloser(strings.NewReader(errorBody)),
-		},
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // assert that the fake implements the interface
@@ -86,36 +74,16 @@ type AKSAgentPoolsAPI struct {
 }
 
 func NewAKSAgentPoolsAPI(aksDataStorage *AKSDataStorage) *AKSAgentPoolsAPI {
-	return &AKSAgentPoolsAPI{
-		aksDataStorage: aksDataStorage,
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // Reset must be called between tests otherwise tests will pollute each other.
-func (c *AKSAgentPoolsAPI) Reset() {
-	c.AgentPoolDeleteMachinesBehavior.Reset()
-	c.AgentPoolGetBehavior.Reset()
-	c.aksDataStorage.AgentPools.Clear()
-}
+func (c *AKSAgentPoolsAPI) Reset() { _ = "STUB: not implemented"; return }
 
 func (c *AKSAgentPoolsAPI) Get(ctx context.Context, resourceGroupName string, resourceName string, agentPoolName string, options *armcontainerservice.AgentPoolsClientGetOptions) (armcontainerservice.AgentPoolsClientGetResponse, error) {
-	input := &AgentPoolGetInput{
-		ResourceGroupName: resourceGroupName,
-		ResourceName:      resourceName,
-		AgentPoolName:     agentPoolName,
-		Options:           options,
-	}
-
-	return c.AgentPoolGetBehavior.Invoke(input, func(input *AgentPoolGetInput) (armcontainerservice.AgentPoolsClientGetResponse, error) {
-		agentPoolID := MkAgentPoolID(input.ResourceGroupName, input.ResourceName, input.AgentPoolName)
-		agentPool, ok := c.aksDataStorage.AgentPools.Load(agentPoolID)
-		if !ok {
-			return armcontainerservice.AgentPoolsClientGetResponse{}, AKSAgentPoolsAPIErrorFromAKSAgentPoolNotFound
-		}
-		return armcontainerservice.AgentPoolsClientGetResponse{
-			AgentPool: agentPool,
-		}, nil
-	})
+	_ = "STUB: not implemented"
+	return *new(armcontainerservice.AgentPoolsClientGetResponse), nil
 }
 
 // Already procedural, and is a fake
@@ -129,72 +97,25 @@ func (c *AKSAgentPoolsAPI) BeginDeleteMachines(
 	aksMachines armcontainerservice.AgentPoolDeleteMachinesParameter,
 	options *armcontainerservice.AgentPoolsClientBeginDeleteMachinesOptions,
 ) (*runtime.Poller[armcontainerservice.AgentPoolsClientDeleteMachinesResponse], error) {
-	input := &AgentPoolDeleteMachinesInput{
-		ResourceGroupName: resourceGroupName,
-		ResourceName:      resourceName,
-		AgentPoolName:     agentPoolName,
-		AKSMachines:       aksMachines,
-		Options:           options,
-	}
-	// Check if agent pool exists before deleting machines
-	agentPoolID := MkAgentPoolID(input.ResourceGroupName, input.ResourceName, input.AgentPoolName)
-	_, ok := c.aksDataStorage.AgentPools.Load(agentPoolID)
-	if !ok {
-		return nil, AKSAgentPoolsAPIErrorFromAKSAgentPoolNotFound
-	}
-
-	return c.AgentPoolDeleteMachinesBehavior.Invoke(input, func(input *AgentPoolDeleteMachinesInput) (*armcontainerservice.AgentPoolsClientDeleteMachinesResponse, error) {
-		// First, validate that all machines exist and collect valid/invalid machines
-		var validMachines []string
-		var invalidMachines []string
-		var allValidMachinesInPool []string
-
-		// Collect all existing machines in the agent pool for error message
-		if c.aksDataStorage != nil && c.aksDataStorage.AKSMachines != nil {
-			c.aksDataStorage.AKSMachines.Range(func(machineID string, value armcontainerservice.Machine) bool {
-				// Check if this machine belongs to the same agent pool
-				expectedPrefix := fmt.Sprintf("/subscriptions/subscriptionID/resourceGroups/%s/providers/Microsoft.ContainerService/managedClusters/%s/agentPools/%s/machines/",
-					input.ResourceGroupName, input.ResourceName, input.AgentPoolName)
-				if strings.HasPrefix(machineID, expectedPrefix) {
-					machineName := strings.TrimPrefix(machineID, expectedPrefix)
-					allValidMachinesInPool = append(allValidMachinesInPool, machineName)
-				}
-				return true
-			})
-		}
-
-		// Check if requested machines exist
-		for _, aksMachineName := range input.AKSMachines.MachineNames {
-			if aksMachineName != nil {
-				id := MkMachineID(input.ResourceGroupName, input.ResourceName, input.AgentPoolName, *aksMachineName)
-				if c.aksDataStorage != nil && c.aksDataStorage.AKSMachines != nil {
-					if _, exists := c.aksDataStorage.AKSMachines.Load(id); exists {
-						validMachines = append(validMachines, *aksMachineName)
-					} else {
-						invalidMachines = append(invalidMachines, *aksMachineName)
-					}
-				}
-			}
-		}
-
-		// If any machines are invalid, return the InvalidParameter error
-		if len(invalidMachines) > 0 {
-			return nil, AKSAgentPoolsAPIErrorFromAKSMachineNotFound(input.AgentPoolName, allValidMachinesInPool)
-		}
-
-		// Delete only the valid machines
-		for _, validMachine := range validMachines {
-			id := MkMachineID(input.ResourceGroupName, input.ResourceName, input.AgentPoolName, validMachine)
-			if c.aksDataStorage != nil && c.aksDataStorage.AKSMachines != nil {
-				c.aksDataStorage.AKSMachines.Delete(id)
-			}
-		}
-
-		return &armcontainerservice.AgentPoolsClientDeleteMachinesResponse{}, nil
-	})
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
+// Check if agent pool exists before deleting machines
+
+// First, validate that all machines exist and collect valid/invalid machines
+
+// Collect all existing machines in the agent pool for error message
+
+// Check if this machine belongs to the same agent pool
+
+// Check if requested machines exist
+
+// If any machines are invalid, return the InvalidParameter error
+
+// Delete only the valid machines
+
 func MkAgentPoolID(resourceGroupName string, clusterName string, agentPoolName string) string {
-	const idFormat = "/subscriptions/subscriptionID/resourceGroups/%s/providers/Microsoft.ContainerService/managedClusters/%s/agentPools/%s"
-	return fmt.Sprintf(idFormat, resourceGroupName, clusterName, agentPoolName)
+	_ = "STUB: not implemented"
+	return ""
 }

@@ -23,20 +23,18 @@ import (
 )
 
 func standardizeAKSMachineTimestamp(t time.Time) time.Time {
+	_ = "STUB: not implemented"
 	// Truncate to centisecond precision (10ms) to ensure consistent 2-digit format
-	return t.UTC().Truncate(10 * time.Millisecond)
+	return *new(time.Time)
 }
 
 // NewAKSMachineTimestamp returns the current time truncated to centisecond precision for AKS machine creation timestamps
-func NewAKSMachineTimestamp() time.Time {
-	return standardizeAKSMachineTimestamp(time.Now())
-}
+func NewAKSMachineTimestamp() time.Time { _ = "STUB: not implemented"; return *new(time.Time) }
 
-func ZeroAKSMachineTimestamp() time.Time {
-	return standardizeAKSMachineTimestamp(time.Unix(0, 0))
-}
+func ZeroAKSMachineTimestamp() time.Time { _ = "STUB: not implemented"; return *new(time.Time) }
 
 // AKSMachineTimestampToMeta converts a time.Time to metav1.Time for AKS machine creation timestamps
 func AKSMachineTimestampToMeta(t time.Time) metav1.Time {
-	return metav1.Time{Time: standardizeAKSMachineTimestamp(t)}
+	_ = "STUB: not implemented"
+	return *new(metav1.Time)
 }

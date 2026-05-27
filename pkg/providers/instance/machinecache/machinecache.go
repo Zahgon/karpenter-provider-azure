@@ -16,18 +16,12 @@ package machinecache
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v9"
-	"github.com/Azure/karpenter-provider-azure/pkg/providers/launchtemplate"
-	"github.com/Azure/karpenter-provider-azure/pkg/utils/machine"
-
-	"github.com/samber/lo"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // AKSMachineClienter provides operations for AKS machines.
@@ -43,38 +37,32 @@ type opts struct {
 }
 
 func defaultOpts() opts {
-	return opts{
-		// ttl is the duration for which a cached machine is considered fresh before it is considered stale.
-		// It defaults to 30 seconds, which is consistent with the max retry delay of the original GET poller.
-		ttl: 30 * time.Second,
-		// pollInterval is the duration between successive polls when waiting for a machine to reach a terminal provisioning state.
-		// It defaults to 5 seconds, which is consistent with the polling interval used by the original GET poller.
-		pollInterval: 5 * time.Second,
-		// pollTimeout is the maximum duration to wait for a machine to reach a terminal provisioning state
-		// before considering the poll to have timed out. It defaults to 15 minutes, which is the maximum
-		// time a NodeClaim has to register in Karpenter core before it is considered failed and deleted.
-		pollTimeout: 15 * time.Minute,
-	}
+	_ = "STUB: not implemented"
+
+	// ttl is the duration for which a cached machine is considered fresh before it is considered stale.
+	// It defaults to 30 seconds, which is consistent with the max retry delay of the original GET poller.
+	return *new(opts)
 }
+
+// pollInterval is the duration between successive polls when waiting for a machine to reach a terminal provisioning state.
+// It defaults to 5 seconds, which is consistent with the polling interval used by the original GET poller.
+
+// pollTimeout is the maximum duration to wait for a machine to reach a terminal provisioning state
+// before considering the poll to have timed out. It defaults to 15 minutes, which is the maximum
+// time a NodeClaim has to register in Karpenter core before it is considered failed and deleted.
 
 // Option is a functional option for configuring MachineCache.
 type Option func(opts) opts
 
 // WithTTL sets a custom Time-to-Live (TTL) for the cache. It determines how long the cache is considered fresh before it needs to be refreshed. A TTL of 0 means the cache is always stale.
-func WithTTL(d time.Duration) Option {
-	return func(o opts) opts { o.ttl = d; return o }
-}
+func WithTTL(d time.Duration) Option { _ = "STUB: not implemented"; return *new(Option) }
 
 // WithPollInterval sets the interval for polling machine provisioning state when using the PollUntilDone helper.
-func WithPollInterval(d time.Duration) Option {
-	return func(o opts) opts { o.pollInterval = d; return o }
-}
+func WithPollInterval(d time.Duration) Option { _ = "STUB: not implemented"; return *new(Option) }
 
 // WithPollTimeout sets the maximum duration to wait for a machine to reach a terminal provisioning state
 // before considering the poll to have timed out.
-func WithPollTimeout(d time.Duration) Option {
-	return func(o opts) opts { o.pollTimeout = d; return o }
-}
+func WithPollTimeout(d time.Duration) Option { _ = "STUB: not implemented"; return *new(Option) }
 
 // MachineCache caches AKS machine resources with TTL-based expiration.
 type MachineCache struct {
@@ -96,301 +84,107 @@ type MachineCache struct {
 // New creates a new cache instance with a background worker for updates.
 // Updates to the cache are triggered when a stale cache is accessed.
 func New(ctx context.Context, client AKSMachineClienter, clusterResourceGroup, clusterName, aksMachinesPoolName string, opts ...Option) *MachineCache {
-	cache := &MachineCache{
-		client:               client,
-		clusterResourceGroup: clusterResourceGroup,
-		clusterName:          clusterName,
-		aksMachinesPoolName:  aksMachinesPoolName,
-		updateRequests:       make(chan struct{}, 1),
-		machines:             make(map[string]*armcontainerservice.Machine),
-		options:              defaultOpts(),
-	}
-
-	for _, opt := range opts {
-		cache.options = opt(cache.options)
-	}
-
-	cache.wg.Add(1)
-	go cache.run(ctx)
-
-	return cache
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // GetWithFallback gets a machine.
 // If useCache is true and the cache is fresh, it will attempt to return the machine from the cache.
 // If the cache is stale or disabled, or if the machine is not found in the cache, it will fall back to calling the AKS API directly.
 func (c *MachineCache) GetWithFallback(ctx context.Context, machineName string, useCache bool) (*armcontainerservice.Machine, error) {
-	if useCache {
-		machine, found, fresh := c.getFromCache(machineName)
-		if fresh && found {
-			c.rehydrateMachine(machine)
-			return machine, nil
-		}
-
-		// Even if the cache is fresh but the machine is not found, we fall through to call the AKS API directly.
-		// This ensures that an out-of-date but fresh cache does not prevent us from retrieving a machine.
-		// It also ensures that the returned error for a missing machine is consistent.
-		// Multiple functions in this package also rely on the assumption that we have a fallback to the API
-		// in cases where the cache is stale or the machine is not found in the cache.
-	}
-
-	// In terms of performance, calling the AKS API directly here is tolerable.
-	// The bulk of Get calls come from polling, and it's rare for a call to fall through to direct API calls during polling.
-	resp, err := c.client.Get(ctx, c.clusterResourceGroup, c.clusterName, c.aksMachinesPoolName, machineName, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get AKS machine %q: %w", machineName, err)
-	}
-
-	machine := lo.ToPtr(resp.Machine)
-	c.rehydrateMachine(machine)
-	c.mu.Lock()
-	c.machines[machineName] = machine
-	c.mu.Unlock()
-
-	return machine, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
+
+// Even if the cache is fresh but the machine is not found, we fall through to call the AKS API directly.
+// This ensures that an out-of-date but fresh cache does not prevent us from retrieving a machine.
+// It also ensures that the returned error for a missing machine is consistent.
+// Multiple functions in this package also rely on the assumption that we have a fallback to the API
+// in cases where the cache is stale or the machine is not found in the cache.
+
+// In terms of performance, calling the AKS API directly here is tolerable.
+// The bulk of Get calls come from polling, and it's rare for a call to fall through to direct API calls during polling.
 
 // getFromCache retrieves a machine from the cache by name.
 // It returns the machine, a boolean indicating if it was found, and a boolean indicating if the cache is fresh.
 func (c *MachineCache) getFromCache(machineName string) (*armcontainerservice.Machine, bool, bool) {
-	if !c.isFresh() {
-		// Note: We do not block waiting for the background cache update to complete because doing so would introduce substantial latency.
-		// Performance-wise, it's preferable to tolerate a few Gets than to block provisioning until the cache populates.
-		c.requestUpdate()
-		return nil, false, false
-	}
-	c.mu.RLock()
-	machine, ok := c.machines[machineName]
-	c.mu.RUnlock()
-	if !ok {
-		return nil, false, true
-	}
+	_ = "STUB: not implemented"
 
-	return machine, true, true
+	// Note: We do not block waiting for the background cache update to complete because doing so would introduce substantial latency.
+	// Performance-wise, it's preferable to tolerate a few Gets than to block provisioning until the cache populates.
+	return nil, false, false
 }
 
 // ListWithFallback lists all machines in the AKS machines pool.
 // If useCache is true and the cache is fresh, it will attempt to return the list from the cache.
 // If the cache is stale or disabled, it will fall back to calling the AKS API directly.
 func (c *MachineCache) ListWithFallback(ctx context.Context, useCache bool) ([]*armcontainerservice.Machine, error) {
-	if useCache {
-		if machines, fresh := c.listFromCache(); fresh {
-			return machines, nil
-		}
-	}
-
-	// We fall back to calling the AKS API directly when the cache is stale or disabled.
-	// There will be duplicate List calls from time to time, but List calls are infrequent enough
-	// that the performance impact is acceptable.
-	var machines []*armcontainerservice.Machine
-	pager := c.client.NewListPager(c.clusterResourceGroup, c.clusterName, c.aksMachinesPoolName, nil)
-	if pager == nil {
-		return nil, fmt.Errorf("failed to list AKS machines: created pager is nil")
-	}
-	for pager.More() {
-		page, err := pager.NextPage(ctx)
-		if err != nil {
-			if machine.IsAKSMachineOrMachinesPoolNotFound(err) {
-				log.FromContext(ctx).V(1).Info("failed to list AKS machines: AKS machines pool not found, treating as no AKS machines found")
-				break
-			}
-
-			return nil, fmt.Errorf("failed to list AKS machines: %w", err)
-		}
-
-		for _, aksMachine := range page.Value {
-			if isValid(aksMachine.Properties) {
-				c.rehydrateMachine(aksMachine)
-				machines = append(machines, aksMachine)
-			}
-		}
-	}
-	return machines, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
+
+// We fall back to calling the AKS API directly when the cache is stale or disabled.
+// There will be duplicate List calls from time to time, but List calls are infrequent enough
+// that the performance impact is acceptable.
 
 // listFromCache returns the list of machines from the cache if the cache is fresh and a boolean indicating whether the cache was fresh.
 func (c *MachineCache) listFromCache() ([]*armcontainerservice.Machine, bool) {
-	if !c.isFresh() {
-		c.requestUpdate()
-		return nil, false
-	}
-	var machines []*armcontainerservice.Machine
-	c.mu.RLock()
-	for _, m := range c.machines {
-		if isValid(m.Properties) {
-			c.rehydrateMachine(m)
-			machines = append(machines, m)
-		}
-	}
-	c.mu.RUnlock()
-	return machines, true
+	_ = "STUB: not implemented"
+	return nil, false
 }
 
 // Invalidate removes a specific machine from the cache by name.
 func (c *MachineCache) Invalidate(machineName string) {
+	_ = "STUB: not implemented"
 	// We remove invalidated machines from the cache.
 	// This is safe because any subsequent GetWithFallback call for this machine will fall back to an API call.
-	c.mu.Lock()
-	delete(c.machines, machineName)
-	c.mu.Unlock()
+	return
 }
 
 // InvalidateAll clears the entire cache, forcing the next access to fall through to the API.
-func (c *MachineCache) InvalidateAll() {
-	c.mu.Lock()
-	c.machines = make(map[string]*armcontainerservice.Machine)
-	c.mu.Unlock()
-	c.lastUpdatedUnixNanos.Store(0)
-}
+func (c *MachineCache) InvalidateAll() { _ = "STUB: not implemented"; return }
 
 // PollUntilDone polls for AKS machine provisioning completion using the cache.
 // This polls indefinitely until the machine reaches a terminal state (Succeeded, Failed, or Deleting) or the context is canceled.
 // If at any point the machine is not found, PollUntilDone will return an error.
 func (c *MachineCache) PollUntilDone(ctx context.Context, name string) (*armcontainerservice.ErrorDetail, error) {
-	log.FromContext(ctx).V(2).Info("starting cache poller for AKS machine", "aksMachineName", name)
-
-	if !c.checkMachineExists(ctx, name) {
-		return nil, fmt.Errorf("AKS machine %q does not exist", name)
-	}
-
-	ticker := time.NewTicker(c.options.pollInterval)
-	defer ticker.Stop()
-
-	timeout := time.After(c.options.pollTimeout)
-
-	for {
-		select {
-		case <-ctx.Done():
-			return nil, fmt.Errorf("context canceled while polling for AKS machine %q: %w", name, ctx.Err())
-
-		case <-ticker.C:
-			provisioningErr, pollerErr, done := c.pollOnce(ctx, name)
-			if done {
-				return provisioningErr, pollerErr
-			}
-		case <-timeout:
-			return nil, fmt.Errorf("timed out while polling for AKS machine %q after %s", name, c.options.pollTimeout)
-		}
-	}
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 func (c *MachineCache) checkMachineExists(ctx context.Context, name string) bool {
-	machine, err := c.GetWithFallback(ctx, name, true)
-	return machine != nil && err == nil
+	_ = "STUB: not implemented"
+	return false
 }
 
 func (c *MachineCache) pollOnce(ctx context.Context, aksMachineName string) (*armcontainerservice.ErrorDetail, error, bool) {
-	aksMachine, found, fresh := c.getFromCache(aksMachineName)
-	if !fresh {
-		return nil, nil, false
-	}
-
-	// Terminate early. This indicates the machine was not found in the cache and there is no point in continuing to poll
-	if !found || aksMachine == nil {
-		// Double check the cache to ensure the machine truly does not exist before returning a terminal error
-		machine, err := c.GetWithFallback(ctx, aksMachineName, true)
-		if machine != nil && err == nil {
-			return nil, nil, false
-		}
-		return nil, fmt.Errorf("AKS machine %q not found in cache", aksMachineName), true
-	}
-
-	if aksMachine.Properties == nil || aksMachine.Properties.ProvisioningState == nil {
-		log.FromContext(ctx).V(1).Info("Cache poller: warning: polling for AKS machine found nil provisioning state, will retry",
-			"aksMachineName", aksMachineName,
-			"aksMachineID", aksMachine.ID,
-		)
-		return nil, nil, false
-	}
-
-	return machine.HandleProvisioningState(ctx, aksMachine)
+	_ = "STUB: not implemented"
+	return nil, nil, false
 }
 
-func (c *MachineCache) run(ctx context.Context) {
-	defer c.wg.Done()
+// Terminate early. This indicates the machine was not found in the cache and there is no point in continuing to poll
 
-	for {
-		select {
-		case <-ctx.Done():
-			return
+// Double check the cache to ensure the machine truly does not exist before returning a terminal error
 
-		case <-c.updateRequests:
-			if err := c.update(ctx); err != nil {
-				log.FromContext(ctx).Error(err, "cache update failed")
-			}
-		}
-	}
-}
+func (c *MachineCache) run(ctx context.Context) { _ = "STUB: not implemented"; return }
 
 // update refreshes the machine cache by fetching the latest list of AKS machines from the Azure API.
 // This should NOT be called directly; it is intended to be used by the background worker.
-func (c *MachineCache) update(ctx context.Context) error {
-	if c.isFresh() {
-		return nil
-	}
+func (c *MachineCache) update(ctx context.Context) error { _ = "STUB: not implemented"; return nil }
 
-	pager := c.client.NewListPager(c.clusterResourceGroup, c.clusterName, c.aksMachinesPoolName, nil)
-	if pager == nil {
-		return fmt.Errorf("failed to list AKS machines: created pager is nil")
-	}
+func (c *MachineCache) isFresh() bool { _ = "STUB: not implemented"; return false }
 
-	fetchedMachines := make(map[string]*armcontainerservice.Machine)
-	for pager.More() {
-		page, err := pager.NextPage(ctx)
-		if err != nil {
-			if machine.IsAKSMachineOrMachinesPoolNotFound(err) {
-				log.FromContext(ctx).V(1).Info("failed to list AKS machines: AKS machines pool not found, treating as no AKS machines found")
-				break
-			}
-			return fmt.Errorf("failed to list AKS machines: %w", err)
-		}
-
-		for _, aksMachine := range page.Value {
-			fetchedMachines[lo.FromPtr(aksMachine.Name)] = aksMachine
-		}
-	}
-
-	c.mu.Lock()
-	c.machines = fetchedMachines
-	c.mu.Unlock()
-
-	log.FromContext(ctx).Info("machine list cache updated", "total", len(fetchedMachines))
-	c.lastUpdatedUnixNanos.Store(time.Now().UnixNano())
-	return nil
-}
-
-func (c *MachineCache) isFresh() bool {
-	lastUpdatedNanos := c.lastUpdatedUnixNanos.Load()
-	if lastUpdatedNanos == 0 {
-		return false
-	}
-	lastUpdated := time.Unix(0, lastUpdatedNanos)
-	return time.Since(lastUpdated) < c.options.ttl
-}
-
-func (c *MachineCache) requestUpdate() {
-	select {
-	case c.updateRequests <- struct{}{}:
-	default:
-	}
-}
+func (c *MachineCache) requestUpdate() { _ = "STUB: not implemented"; return }
 
 func isValid(properties *armcontainerservice.MachineProperties) bool {
-	if properties == nil || properties.Tags == nil {
-		return false
-	}
-	if _, hasTags := properties.Tags[launchtemplate.NodePoolTagKey]; !hasTags {
-		return false
-	}
-
-	return true
+	_ = "STUB: not implemented"
+	return false
 }
 
 func (c *MachineCache) rehydrateMachine(aksMachine *armcontainerservice.Machine) {
+	_ = "STUB: not implemented"
 	// This needs to be rehydrated per the current behavior of both AKS machine API and AKS AgentPool API: priority will shows up only for spot.
 	// An example use of this down the codepath is  to construct a NodeClaim representation (BuildNodeClaimFromAKSMachine).
 	// Suggestion: rework/research more on this pattern RP-side?
-	if aksMachine.Properties != nil && aksMachine.Properties.Priority == nil {
-		aksMachine.Properties.Priority = lo.ToPtr(armcontainerservice.ScaleSetPriorityRegular)
-	}
+	return
 }

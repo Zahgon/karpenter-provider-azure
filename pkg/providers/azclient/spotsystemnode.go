@@ -34,8 +34,6 @@ var _ policy.Policy = &spotSystemNodePolicy{}
 type spotSystemNodePolicy struct{}
 
 func (p *spotSystemNodePolicy) Do(req *policy.Request) (*http.Response, error) {
-	if req.Raw().Method == http.MethodPut {
-		req.Raw().Header.Set("AllowSpotVMSystemNode", "true")
-	}
-	return req.Next()
+	_ = "STUB: not implemented"
+	return nil, nil
 }

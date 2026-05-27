@@ -17,11 +17,6 @@ limitations under the License.
 package auth
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
-	"strings"
-
 	"github.com/Azure/go-autorest/autorest"
 )
 
@@ -51,80 +46,35 @@ type Config struct {
 }
 
 // BuildAzureConfig returns a Config object for the Azure clients
-func BuildAzureConfig() (*Config, error) {
-	cfg := &Config{}
-
-	if err := cfg.Build(); err != nil {
-		return nil, err
-	}
-	if err := cfg.Default(); err != nil {
-		return nil, err
-	}
-	if err := cfg.Validate(); err != nil {
-		return nil, err
-	}
-
-	return cfg, nil
-}
+func BuildAzureConfig() (*Config, error) { _ = "STUB: not implemented"; return nil, nil }
 
 func (cfg *Config) Build() error {
+	_ = "STUB: not implemented"
 	// May require more than this behind the scenes: https://github.com/Azure/azure-sdk-for-go/blob/main/sdk/azidentity/README.md#defaultazurecredential
-	cfg.Cloud = strings.TrimSpace(os.Getenv("ARM_CLOUD"))
-	cfg.Location = strings.TrimSpace(os.Getenv("LOCATION"))
-	cfg.ResourceGroup = strings.TrimSpace(os.Getenv("ARM_RESOURCE_GROUP"))
-	// TODO: We probably can remove both of these "ARM_" fallbacks in mid 2026. We also don't currently
-	// use the TENANT_ID anyway so possibly could remove that too.
-	// Read both ARM_TENANT_ID and AZURE_TENANT_ID env vars, preferring AZURE_ when both are set
-	cfg.TenantID = strings.TrimSpace(os.Getenv("AZURE_TENANT_ID"))
-	if cfg.TenantID == "" {
-		cfg.TenantID = strings.TrimSpace(os.Getenv("ARM_TENANT_ID"))
-	}
-	// Read both ARM_SUBSCRIPTION_ID and AZURE_SUBSCRIPTION_ID env vars, preferring AZURE_ when both are set
-	cfg.SubscriptionID = strings.TrimSpace(os.Getenv("AZURE_SUBSCRIPTION_ID"))
-	if cfg.SubscriptionID == "" {
-		cfg.SubscriptionID = strings.TrimSpace(os.Getenv("ARM_SUBSCRIPTION_ID"))
-	}
-	cfg.AzureEnvironmentFilepath = strings.TrimSpace(os.Getenv("AZURE_ENVIRONMENT_FILEPATH"))
-
 	return nil
 }
 
-func (cfg *Config) Default() error {
-	// Default is AzurePublicCloud if not set
-	if cfg.Cloud == "" && cfg.AzureEnvironmentFilepath == "" {
-		cfg.Cloud = "AzurePublicCloud"
-	}
+// TODO: We probably can remove both of these "ARM_" fallbacks in mid 2026. We also don't currently
+// use the TENANT_ID anyway so possibly could remove that too.
+// Read both ARM_TENANT_ID and AZURE_TENANT_ID env vars, preferring AZURE_ when both are set
 
+// Read both ARM_SUBSCRIPTION_ID and AZURE_SUBSCRIPTION_ID env vars, preferring AZURE_ when both are set
+
+func (cfg *Config) Default() error {
+	_ = "STUB: not implemented"
+	// Default is AzurePublicCloud if not set
 	return nil
 }
 
 func (cfg *Config) Validate() error {
+	_ = "STUB: not implemented"
 	// Validate that ARM_CLOUD and AZURE_ENVIRONMENT_FILEPATH are not both set
-	if cfg.Cloud != "" && cfg.AzureEnvironmentFilepath != "" {
-		return fmt.Errorf("ARM_CLOUD and AZURE_ENVIRONMENT_FILEPATH cannot both be set - please use only one cloud configuration method")
-	}
-
-	// Setup fields and validate all of them are not empty
-	fields := []cfgField{
-		{cfg.SubscriptionID, "subscription ID"},
-		// Even though the config doesnt use some of these,
-		// its good to validate they were set in the environment
-	}
-
-	for _, field := range fields {
-		if field.val == "" {
-			return fmt.Errorf("%s not set", field.name)
-		}
-	}
-
 	return nil
 }
 
-func (cfg *Config) String() string {
-	json, err := json.Marshal(cfg)
-	if err != nil {
-		return fmt.Sprintf("couldn't marshal Config JSON: %s", err)
-	}
+// Setup fields and validate all of them are not empty
 
-	return string(json)
-}
+// Even though the config doesnt use some of these,
+// its good to validate they were set in the environment
+
+func (cfg *Config) String() string { _ = "STUB: not implemented"; return "" }

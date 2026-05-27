@@ -23,12 +23,8 @@ package models
 import (
 	"context"
 	"encoding/json"
-	stderrors "errors"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
 )
 
 // LocalDNSProfile Configures the per-node local DNS, with VnetDNS and KubeDNS overrides. LocalDNS helps improve performance and reliability of DNS resolution in an AKS cluster. For more details see aka.ms/aks/localdns.
@@ -49,48 +45,16 @@ type LocalDNSProfile struct {
 
 // Validate validates this local DNS profile
 func (m *LocalDNSProfile) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateKubeDNSOverrides(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateMode(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateVnetDNSOverrides(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *LocalDNSProfile) validateKubeDNSOverrides(formats strfmt.Registry) error {
-	if swag.IsZero(m.KubeDNSOverrides) { // not required
-		return nil
-	}
-
-	if m.KubeDNSOverrides != nil {
-		if err := m.KubeDNSOverrides.Validate(formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("kubeDNSOverrides")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("kubeDNSOverrides")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
 
 var localDnsProfileTypeModePropEnum []any
 
@@ -118,124 +82,50 @@ const (
 
 // prop value enum
 func (m *LocalDNSProfile) validateModeEnum(path, location string, value string) error {
-	if err := validate.EnumCase(path, location, value, localDnsProfileTypeModePropEnum, true); err != nil {
-		return err
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *LocalDNSProfile) validateMode(formats strfmt.Registry) error {
-	if swag.IsZero(m.Mode) { // not required
-		return nil
-	}
-
-	// value enum
-	if err := m.validateModeEnum("mode", "body", *m.Mode); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
+	// not required
 }
+
+// value enum
 
 func (m *LocalDNSProfile) validateVnetDNSOverrides(formats strfmt.Registry) error {
-	if swag.IsZero(m.VnetDNSOverrides) { // not required
-		return nil
-	}
-
-	if m.VnetDNSOverrides != nil {
-		if err := m.VnetDNSOverrides.Validate(formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("vnetDNSOverrides")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("vnetDNSOverrides")
-			}
-
-			return err
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
 
 // ContextValidate validate this local DNS profile based on the context it is used
 func (m *LocalDNSProfile) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.contextValidateKubeDNSOverrides(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateVnetDNSOverrides(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *LocalDNSProfile) contextValidateKubeDNSOverrides(ctx context.Context, formats strfmt.Registry) error {
-
-	if swag.IsZero(m.KubeDNSOverrides) { // not required
-		return nil
-	}
-
-	if err := m.KubeDNSOverrides.ContextValidate(ctx, formats); err != nil {
-		ve := new(errors.Validation)
-		if stderrors.As(err, &ve) {
-			return ve.ValidateName("kubeDNSOverrides")
-		}
-		ce := new(errors.CompositeError)
-		if stderrors.As(err, &ce) {
-			return ce.ValidateName("kubeDNSOverrides")
-		}
-
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
 
 func (m *LocalDNSProfile) contextValidateVnetDNSOverrides(ctx context.Context, formats strfmt.Registry) error {
-
-	if swag.IsZero(m.VnetDNSOverrides) { // not required
-		return nil
-	}
-
-	if err := m.VnetDNSOverrides.ContextValidate(ctx, formats); err != nil {
-		ve := new(errors.Validation)
-		if stderrors.As(err, &ve) {
-			return ve.ValidateName("vnetDNSOverrides")
-		}
-		ce := new(errors.CompositeError)
-		if stderrors.As(err, &ce) {
-			return ce.ValidateName("vnetDNSOverrides")
-		}
-
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// not required
 
 // MarshalBinary interface implementation
 func (m *LocalDNSProfile) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 // UnmarshalBinary interface implementation
-func (m *LocalDNSProfile) UnmarshalBinary(b []byte) error {
-	var res LocalDNSProfile
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
+func (m *LocalDNSProfile) UnmarshalBinary(b []byte) error { _ = "STUB: not implemented"; return nil }

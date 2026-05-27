@@ -18,30 +18,17 @@ package inplaceupdate
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"time"
 
-	"github.com/awslabs/operatorpkg/reasonable"
-	"github.com/samber/lo"
-	controllerruntime "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	karpv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
-	"sigs.k8s.io/karpenter/pkg/operator/injection"
-	corenodeclaimutils "sigs.k8s.io/karpenter/pkg/utils/nodeclaim"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v7"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v9"
 	"github.com/Azure/karpenter-provider-azure/pkg/apis/v1beta1"
 	"github.com/Azure/karpenter-provider-azure/pkg/operator/options"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/instance"
-	nodeclaimutils "github.com/Azure/karpenter-provider-azure/pkg/utils/nodeclaim"
 )
 
 type Controller struct {
@@ -55,94 +42,40 @@ func NewController(
 	vmInstanceProvider instance.VMProvider,
 	aksMachineInstanceProvider instance.AKSMachineProvider,
 ) *Controller {
-	return &Controller{
-		kubeClient:                 kubeClient,
-		vmInstanceProvider:         vmInstanceProvider,
-		aksMachineInstanceProvider: aksMachineInstanceProvider,
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func (c *Controller) Reconcile(ctx context.Context, nodeClaim *karpv1.NodeClaim) (reconcile.Result, error) {
-	ctx = injection.WithControllerName(ctx, "nodeclaim.inplaceupdate")
-	// No need to add nodeClaim name to the context as it's already there
-
-	// Get the NodeClass
-	nodeClass, err := nodeclaimutils.GetAKSNodeClass(ctx, c.kubeClient, nodeClaim)
-	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("resolving AKSNodeClass, %w", err)
-	}
-
-	// TODO: When we have sources of truth coming from NodePool we can do:
-	// nodePool, err := nodeclaimutil.Owner(ctx, c.kubeClient, nodeClaim)
-	// TODO: To look it up and use that as input to calculate the goal state as well
-
-	// Compare the expected hash with the actual hash
-	options := options.FromContext(ctx)
-	goalHash, err := HashFromNodeClaim(options, nodeClaim, nodeClass)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	actualHash := nodeClaim.Annotations[v1beta1.AnnotationInPlaceUpdateHash]
-
-	log.FromContext(ctx).V(1).Info("comparing in-place update hashes", "goalHash", goalHash, "actualHash", actualHash)
-
-	// If there's no difference from goal state, no need to do anything else
-	if goalHash == actualHash {
-		return reconcile.Result{}, nil
-	}
-
-	if shouldProcess, result := c.shouldProcess(ctx, nodeClaim); !shouldProcess {
-		return result, nil
-	}
-
-	stored := nodeClaim.DeepCopy()
-
-	if aksMachineName, isAKSMachine := instance.GetAKSMachineNameFromNodeClaim(nodeClaim); isAKSMachine {
-		// AKS machine-based nodeClaim
-		err := c.processAKSMachineInstance(ctx, options, nodeClaim, nodeClass, aksMachineName)
-		if err != nil {
-			return reconcile.Result{}, fmt.Errorf("processing AKS machine instance for nodeClaim %s: %w", nodeClaim.Name, err)
-		}
-	} else {
-		// VM-based nodeClaim
-		err := c.processVMInstance(ctx, options, nodeClaim, nodeClass)
-		if err != nil {
-			return reconcile.Result{}, fmt.Errorf("processing VM instance for nodeClaim %s: %w", nodeClaim.Name, err)
-		}
-	}
-
-	if nodeClaim.Annotations == nil {
-		nodeClaim.Annotations = make(map[string]string)
-	}
-	// Regardless of whether we actually changed anything in Azure, we have confirmed that
-	// the goal shape is in alignment with our expected shape, so update the annotation to reflect that
-	nodeClaim.Annotations[v1beta1.AnnotationInPlaceUpdateHash] = goalHash
-	err = c.kubeClient.Patch(ctx, nodeClaim, client.MergeFrom(stored))
-	if err != nil {
-		return reconcile.Result{}, client.IgnoreNotFound(err)
-	}
-
-	return reconcile.Result{}, nil
+	_ = "STUB: not implemented"
+	return *new(reconcile.Result), nil
 }
+
+// No need to add nodeClaim name to the context as it's already there
+
+// Get the NodeClass
+
+// TODO: When we have sources of truth coming from NodePool we can do:
+// nodePool, err := nodeclaimutil.Owner(ctx, c.kubeClient, nodeClaim)
+// TODO: To look it up and use that as input to calculate the goal state as well
+
+// Compare the expected hash with the actual hash
+
+// If there's no difference from goal state, no need to do anything else
+
+// AKS machine-based nodeClaim
+
+// VM-based nodeClaim
+
+// Regardless of whether we actually changed anything in Azure, we have confirmed that
+// the goal shape is in alignment with our expected shape, so update the annotation to reflect that
 
 func (c *Controller) shouldProcess(ctx context.Context, nodeClaim *karpv1.NodeClaim) (bool, reconcile.Result) {
-	if !nodeClaim.DeletionTimestamp.IsZero() {
-		return false, reconcile.Result{}
-	}
-
-	// If the node isn't registered yet, we need to wait until it is as otherwise all the resources we need to update may not exist yet
-	if !nodeClaim.StatusConditions().Get(karpv1.ConditionTypeRegistered).IsTrue() {
-		log.FromContext(ctx).V(1).Info("can't update yet as the claim is not registered")
-		return false, reconcile.Result{RequeueAfter: 60 * time.Second}
-	}
-
-	if nodeClaim.Status.ProviderID == "" {
-		log.FromContext(ctx).V(1).Info("can't update yet as there's no provider ID")
-		return false, reconcile.Result{RequeueAfter: 60 * time.Second}
-	}
-
-	return true, reconcile.Result{}
+	_ = "STUB: not implemented"
+	return false, *new(reconcile.Result)
 }
+
+// If the node isn't registered yet, we need to wait until it is as otherwise all the resources we need to update may not exist yet
 
 func (c *Controller) processVMInstance(
 	ctx context.Context,
@@ -150,16 +83,7 @@ func (c *Controller) processVMInstance(
 	nodeClaim *karpv1.NodeClaim,
 	nodeClass *v1beta1.AKSNodeClass,
 ) error {
-	vm, err := nodeclaimutils.GetVM(ctx, c.vmInstanceProvider, nodeClaim)
-	if err != nil {
-		return fmt.Errorf("getting VM for nodeClaim %s: %w", nodeClaim.Name, err)
-	}
-
-	err = c.applyVMPatch(ctx, options, nodeClaim, nodeClass, vm)
-	if err != nil {
-		return fmt.Errorf("applying patch to VM for nodeClaim %s: %w", nodeClaim.Name, err)
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
@@ -170,16 +94,7 @@ func (c *Controller) processAKSMachineInstance(
 	nodeClass *v1beta1.AKSNodeClass,
 	aksMachineName string,
 ) error {
-	aksMachine, err := c.aksMachineInstanceProvider.Get(ctx, aksMachineName)
-	if err != nil {
-		return fmt.Errorf("getting AKS machine %s from instance provider: %w", aksMachineName, err)
-	}
-
-	err = c.applyAKSMachinePatch(ctx, options, nodeClaim, nodeClass, aksMachineName, aksMachine)
-	if err != nil {
-		return fmt.Errorf("applying patch to AKS machine for nodeClaim %s: %w", nodeClaim.Name, err)
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
@@ -190,21 +105,14 @@ func (c *Controller) applyVMPatch(
 	nodeClass *v1beta1.AKSNodeClass,
 	vm *armcompute.VirtualMachine,
 ) error {
-	update := CalculateVMPatch(options, nodeClaim, nodeClass, vm)
-	// This is safe only as long as we're not updating fields which we consider secret.
-	// If we do/are, we need to redact them.
-	logVMPatch(ctx, update)
-
-	// Apply the update, if one is needed
-	if update != nil {
-		err := c.vmInstanceProvider.Update(ctx, lo.FromPtr(vm.Name), *update)
-		if err != nil {
-			return fmt.Errorf("failed to apply update to VM, %w", err)
-		}
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
+
+// This is safe only as long as we're not updating fields which we consider secret.
+// If we do/are, we need to redact them.
+
+// Apply the update, if one is needed
 
 func (c *Controller) applyAKSMachinePatch(
 	ctx context.Context,
@@ -214,58 +122,32 @@ func (c *Controller) applyAKSMachinePatch(
 	aksMachineName string,
 	aksMachine *armcontainerservice.Machine,
 ) error {
+	_ = "STUB: not implemented"
 	// Create a deep copy of the original for diff comparison
-	originalBytes, _ := json.Marshal(aksMachine)
-	var originalAKSMachine armcontainerservice.Machine
-	err := json.Unmarshal(originalBytes, &originalAKSMachine)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal original AKS machine for comparison: %w", err)
-	}
-
-	patchExists := CalculateAKSMachinePatch(options, nodeClaim, nodeClass, aksMachine)
-	// This is safe only as long as we're not updating fields which we consider secret.
-	// If we do/are, we need to redact them.
-
-	// Apply the update, if one is needed
-	if patchExists {
-		logAKSMachinePatch(ctx, &originalAKSMachine, aksMachine)
-		// Extract ETag for optimistic concurrency control
-		var etag *string
-		if aksMachine.Properties != nil && aksMachine.Properties.ETag != nil {
-			etag = aksMachine.Properties.ETag
-		}
-
-		// Given AKS machine support PUT, but not PATCH, the AKS machine object will be updated directly w/ etag check
-		err := c.aksMachineInstanceProvider.Update(ctx, aksMachineName, *aksMachine, etag)
-		if err != nil {
-			// ASSUMPTION: if it is etag mismatch, the next try would work (if without another mismatch)
-			return fmt.Errorf("failed to apply update to AKS machine %s, %w", aksMachineName, err)
-		}
-	}
-
 	return nil
 }
 
+// This is safe only as long as we're not updating fields which we consider secret.
+// If we do/are, we need to redact them.
+
+// Apply the update, if one is needed
+
+// Extract ETag for optimistic concurrency control
+
+// Given AKS machine support PUT, but not PATCH, the AKS machine object will be updated directly w/ etag check
+
+// ASSUMPTION: if it is etag mismatch, the next try would work (if without another mismatch)
+
 func (c *Controller) Register(_ context.Context, m manager.Manager) error {
-	return controllerruntime.NewControllerManagedBy(m).
-		Named("nodeclaim.inplaceupdate").
-		For(
-			&karpv1.NodeClaim{},
-			builder.WithPredicates(
-				nodeclaimutils.UsingAKSNodeClassPredicate(),
-				predicate.Or(
-					predicate.GenerationChangedPredicate{}, // Note that this will trigger on pod restart for all Machines.
-				),
-			)).
-		Watches(&v1beta1.AKSNodeClass{}, corenodeclaimutils.NodeClassEventHandler(m.GetClient()), builder.WithPredicates(tagsChangedPredicate{})).
-		// TODO: Can add .Watches(&karpv1.NodePool{}, nodeclaimutil.NodePoolEventHandler(c.kubeClient))
-		// TODO: similar to https://github.com/kubernetes-sigs/karpenter/blob/main/pkg/controllers/nodeclaim/disruption/controller.go#L214C3-L217C5
-		// TODO: if/when we need to monitor provisioner changes and flow updates on the NodePool down to the underlying VMs.
-		WithOptions(controller.Options{
-			RateLimiter: reasonable.RateLimiter(),
-			// TODO: Document why this magic number used. If we want to consistently use it accoss reconcilers, refactor to a reused const.
-			// Comments thread discussing this: https://github.com/Azure/karpenter-provider-azure/pull/729#discussion_r2006629809
-			MaxConcurrentReconciles: 10,
-		}).
-		Complete(reconcile.AsReconciler(m.GetClient(), c))
+	_ = "STUB: not implemented"
+	return nil
 }
+
+// Note that this will trigger on pod restart for all Machines.
+
+// TODO: Can add .Watches(&karpv1.NodePool{}, nodeclaimutil.NodePoolEventHandler(c.kubeClient))
+// TODO: similar to https://github.com/kubernetes-sigs/karpenter/blob/main/pkg/controllers/nodeclaim/disruption/controller.go#L214C3-L217C5
+// TODO: if/when we need to monitor provisioner changes and flow updates on the NodePool down to the underlying VMs.
+
+// TODO: Document why this magic number used. If we want to consistently use it accoss reconcilers, refactor to a reused const.
+// Comments thread discussing this: https://github.com/Azure/karpenter-provider-azure/pull/729#discussion_r2006629809

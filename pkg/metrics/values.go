@@ -16,8 +16,6 @@ limitations under the License.
 
 package metrics
 
-import "github.com/Azure/karpenter-provider-azure/pkg/logging"
-
 // Value represents a key-value pair for logging with a known key
 type Value struct {
 	key   string
@@ -26,29 +24,22 @@ type Value struct {
 
 // Key returns the logging key
 func (m Value) Key() string {
-	return m.key
+	_ = "STUB: not implemented"
+
+	// Value returns the logging value
+	return ""
 }
 
-// Value returns the logging value
 func (m Value) Value() any {
-	return m.value
+	_ = "STUB: not implemented"
+
+	// Constructor functions for each metric value type with known keys
+	return *new(any)
 }
 
-// Constructor functions for each metric value type with known keys
+func ImageID(value string) Value { _ = "STUB: not implemented"; return *new(Value) }
 
-func ImageID(value string) Value {
-	return Value{key: logging.ImageID, value: value}
-}
-
-func ResponseError(value string) Value {
-	return Value{key: "responseError", value: value}
-}
+func ResponseError(value string) Value { _ = "STUB: not implemented"; return *new(Value) }
 
 // Helper function to convert a slice of Values to their key-value pairs
-func ValuesToKeyValuePairs(values ...Value) []any {
-	var pairs []any
-	for _, v := range values {
-		pairs = append(pairs, v.Key(), v.Value())
-	}
-	return pairs
-}
+func ValuesToKeyValuePairs(values ...Value) []any { _ = "STUB: not implemented"; return nil }

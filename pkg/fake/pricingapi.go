@@ -18,8 +18,6 @@ package fake
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/pricing/client"
 )
@@ -39,34 +37,21 @@ type PricingBehavior struct {
 // assert that the fake implements the interface
 var _ client.PricingAPI = &PricingAPI{}
 
-func (p *PricingAPI) Reset() {
-	p.NextError.Reset()
-	p.ProductsPricePage.Reset()
-}
+func (p *PricingAPI) Reset() { _ = "STUB: not implemented"; return }
 
 func (p *PricingAPI) GetProductsPricePages(_ context.Context, _ []*client.Filter, fn func(output *client.ProductsPricePage)) error {
-	if !p.NextError.IsNil() {
-		return p.NextError.Get()
-	}
-	if !p.ProductsPricePage.IsNil() {
-		fn(p.ProductsPricePage.Clone())
-		return nil
-	}
-	// fail if the test doesn't provide specific data which causes our pricing provider to use its static price list
-	return errors.New("no pricing data provided")
+	_ = "STUB: not implemented"
+	return nil
 }
 
+// fail if the test doesn't provide specific data which causes our pricing provider to use its static price list
+
 func NewProductPrice(instanceType string, price float64) client.Item {
-	return client.Item{
-		ArmSkuName:  instanceType,
-		RetailPrice: price,
-	}
+	_ = "STUB: not implemented"
+	return *new(client.Item)
 }
 
 func NewSpotProductPrice(instanceType string, price float64) client.Item {
-	return client.Item{
-		SkuName:     fmt.Sprintf("%s %s", instanceType, "Spot"),
-		ArmSkuName:  instanceType,
-		RetailPrice: price,
-	}
+	_ = "STUB: not implemented"
+	return *new(client.Item)
 }

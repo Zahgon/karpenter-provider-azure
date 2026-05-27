@@ -23,10 +23,7 @@ package models
 import (
 	"context"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
 )
 
 // ProvisionHelperValues provision helper values
@@ -45,59 +42,35 @@ type ProvisionHelperValues struct {
 
 // Validate validates this provision helper values
 func (m *ProvisionHelperValues) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateSkuCPU(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateSkuMemory(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *ProvisionHelperValues) validateSkuCPU(formats strfmt.Registry) error {
-
-	if err := validate.Required("skuCPU", "body", m.SkuCPU); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func (m *ProvisionHelperValues) validateSkuMemory(formats strfmt.Registry) error {
-
-	if err := validate.Required("skuMemory", "body", m.SkuMemory); err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 // ContextValidate validates this provision helper values based on context it is used
 func (m *ProvisionHelperValues) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	_ = "STUB: not implemented"
+
+	// MarshalBinary interface implementation
 	return nil
 }
 
-// MarshalBinary interface implementation
 func (m *ProvisionHelperValues) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 // UnmarshalBinary interface implementation
 func (m *ProvisionHelperValues) UnmarshalBinary(b []byte) error {
-	var res ProvisionHelperValues
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
+	_ = "STUB: not implemented"
 	return nil
 }

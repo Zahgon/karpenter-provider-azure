@@ -17,27 +17,23 @@ limitations under the License.
 package offerings
 
 import (
-	"github.com/samber/lo"
-	v1 "k8s.io/api/core/v1"
-	karpv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 	corecloudprovider "sigs.k8s.io/karpenter/pkg/cloudprovider"
 )
 
 // Suggestion: consider merging this package with instancetype package, as both of their responsibilities deal with instance types management
 
 func getOfferingCapacityType(offering *corecloudprovider.Offering) string {
-	return offering.Requirements.Get(karpv1.CapacityTypeLabelKey).Any()
+	_ = "STUB: not implemented"
+	return ""
 }
 
 func getOfferingZone(offering *corecloudprovider.Offering) string {
-	return offering.Requirements.Get(v1.LabelTopologyZone).Any()
+	_ = "STUB: not implemented"
+	return ""
 }
 
 // May return nil if there is no match
 func GetInstanceTypeFromVMSize(vmSize string, possibleInstanceTypes []*corecloudprovider.InstanceType) *corecloudprovider.InstanceType {
-	instanceType, _ := lo.Find(possibleInstanceTypes, func(i *corecloudprovider.InstanceType) bool {
-		return i.Name == vmSize
-	})
-
-	return instanceType
+	_ = "STUB: not implemented"
+	return nil
 }

@@ -18,19 +18,12 @@ package status
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"time"
 
-	"github.com/samber/lo"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	sdkerrors "github.com/Azure/azure-sdk-for-go-extensions/pkg/errors"
 	"github.com/Azure/karpenter-provider-azure/pkg/apis/v1beta1"
-	"github.com/Azure/karpenter-provider-azure/pkg/operator/options"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/azclient/azapi"
-	"github.com/Azure/karpenter-provider-azure/pkg/utils"
 )
 
 type SubnetReconciler struct {
@@ -38,9 +31,8 @@ type SubnetReconciler struct {
 }
 
 func NewSubnetReconciler(subnetClient azapi.SubnetsAPI) *SubnetReconciler {
-	return &SubnetReconciler{
-		subnetClient: subnetClient,
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 const (
@@ -58,81 +50,17 @@ const (
 )
 
 func (r *SubnetReconciler) Reconcile(ctx context.Context, nodeClass *v1beta1.AKSNodeClass) (reconcile.Result, error) {
+	_ = "STUB: not implemented"
 	// TODO: Handle podSubnetID readiness here as well
-	return r.validateVNETSubnetID(ctx, nodeClass)
+	return *new(reconcile.Result), nil
 }
 
 func (r *SubnetReconciler) validateVNETSubnetID(ctx context.Context, nodeClass *v1beta1.AKSNodeClass) (reconcile.Result, error) {
-	clusterSubnetID := options.FromContext(ctx).SubnetID
-	subnetID := lo.Ternary(nodeClass.Spec.VNETSubnetID != nil, lo.FromPtr(nodeClass.Spec.VNETSubnetID), options.FromContext(ctx).SubnetID)
-	logger := log.FromContext(ctx).WithName(subnetReconcilerName).WithValues("subnetID", subnetID)
-
-	nodeClassSubnetComponents, err := utils.GetVnetSubnetIDComponents(subnetID)
-	if err != nil {
-		logger.Error(err, "failed to parse vnetSubnetID", "subnetID", subnetID)
-		nodeClass.StatusConditions().SetFalse(
-			v1beta1.ConditionTypeSubnetsReady,
-			SubnetUnreadyReasonIDInvalid,
-			fmt.Sprintf("Failed to parse vnetSubnetID %s", subnetID),
-		)
-		return reconcile.Result{}, nil
-	}
-	if subnetID != clusterSubnetID {
-		clusterSubnetIDParts, err := utils.GetVnetSubnetIDComponents(clusterSubnetID) // Assume valid cluster subnet id
-		if err != nil {                                                               // Highly unlikely case but putting it in nonetheless
-			logger.Error(err, "failed to parse cluster subnet ID", "clusterSubnetID", clusterSubnetID)
-			return reconcile.Result{}, nil
-		}
-
-		isClusterManagedVNET, err := utils.IsAKSManagedVNET(options.FromContext(ctx).NodeResourceGroup, clusterSubnetID)
-		if err != nil {
-			logger.Error(err, "failed to determine if cluster VNet is managed", "clusterSubnetID", clusterSubnetID)
-			return reconcile.Result{}, nil
-		}
-
-		if isClusterManagedVNET && clusterSubnetIDParts.IsSameVNET(nodeClassSubnetComponents) {
-			logger.Error(nil, "custom subnet cannot be in the same VNet as cluster managed VNet", "subnetID", subnetID)
-			nodeClass.StatusConditions().SetFalse(
-				v1beta1.ConditionTypeSubnetsReady,
-				SubnetUnreadyReasonIDInvalid,
-				fmt.Sprintf("custom subnet cannot be in the same VNet as cluster managed VNet: %s", subnetID),
-			)
-			return reconcile.Result{}, nil
-		}
-
-		if !clusterSubnetIDParts.IsSameVNET(nodeClassSubnetComponents) {
-			logger.Error(nil, "subnet does not match cluster subscription, resource group, or virtual network", "subnetID", subnetID)
-			nodeClass.StatusConditions().SetFalse(
-				v1beta1.ConditionTypeSubnetsReady,
-				SubnetUnreadyReasonIDInvalid,
-				fmt.Sprintf("vnetSubnetID does not match the cluster subscription, resource group, or virtual network: %s", subnetID),
-			)
-			return reconcile.Result{}, nil
-		}
-	}
-
-	_, err = r.subnetClient.Get(ctx, nodeClassSubnetComponents.ResourceGroupName, nodeClassSubnetComponents.VNetName, nodeClassSubnetComponents.SubnetName, nil)
-	if err != nil {
-		azErr := sdkerrors.IsResponseError(err)
-		if azErr != nil && (azErr.StatusCode == http.StatusNotFound) {
-			nodeClass.StatusConditions().SetFalse(
-				v1beta1.ConditionTypeSubnetsReady,
-				SubnetUnreadyReasonNotFound,
-				fmt.Sprintf("resource not found: %s", subnetID),
-			)
-			return reconcile.Result{RequeueAfter: time.Minute}, err
-		}
-		nodeClass.StatusConditions().SetFalse(
-			v1beta1.ConditionTypeSubnetsReady,
-			SubnetUnreadyReasonUnknownError,
-			fmt.Sprintf("unknown error getting subnet: %s", err.Error()),
-		)
-		logger.Error(err, "getting subnet failed during reconciliation with unknown error", "error", err.Error())
-		return reconcile.Result{}, err
-	}
-
-	nodeClass.StatusConditions().SetTrue(v1beta1.ConditionTypeSubnetsReady)
-
-	// Periodically requeue just in case subnet has been removed or later revalidating things like fullness etc
-	return reconcile.Result{RequeueAfter: healthyRequeueInterval}, nil
+	_ = "STUB: not implemented"
+	return *new(reconcile.Result), nil
 }
+
+// Assume valid cluster subnet id
+// Highly unlikely case but putting it in nonetheless
+
+// Periodically requeue just in case subnet has been removed or later revalidating things like fullness etc

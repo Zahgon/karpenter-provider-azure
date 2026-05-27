@@ -16,10 +16,6 @@ limitations under the License.
 
 package client
 
-import (
-	"fmt"
-)
-
 type comparisonOperator string
 
 const (
@@ -35,6 +31,4 @@ type Filter struct {
 	Value    string
 }
 
-func (f *Filter) String() string {
-	return fmt.Sprintf("%s %s '%s'", f.Field, f.Operator, f.Value)
-}
+func (f *Filter) String() string { _ = "STUB: not implemented"; return "" }

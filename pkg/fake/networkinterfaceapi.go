@@ -18,13 +18,7 @@ package fake
 
 import (
 	"context"
-	"fmt"
-	"maps"
-	"net/http"
 
-	"github.com/samber/lo"
-
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	fakesync "github.com/Azure/karpenter-provider-azure/pkg/fake/sync"
@@ -65,54 +59,21 @@ type NetworkInterfacesAPI struct {
 }
 
 // Reset must be called between tests otherwise tests will pollute each other.
-func (c *NetworkInterfacesAPI) Reset() {
-	c.NetworkInterfacesCreateOrUpdateBehavior.Reset()
-	c.NetworkInterfacesDeleteBehavior.Reset()
-	c.NetworkInterfacesUpdateTagsBehavior.Reset()
-	c.NetworkInterfaces.Clear()
-}
+func (c *NetworkInterfacesAPI) Reset() { _ = "STUB: not implemented"; return }
 
 func (c *NetworkInterfacesAPI) BeginCreateOrUpdate(_ context.Context, resourceGroupName string, interfaceName string, iface armnetwork.Interface, options *armnetwork.InterfacesClientBeginCreateOrUpdateOptions) (*runtime.Poller[armnetwork.InterfacesClientCreateOrUpdateResponse], error) {
-	input := &NetworkInterfaceCreateOrUpdateInput{
-		ResourceGroupName: resourceGroupName,
-		InterfaceName:     interfaceName,
-		Interface:         iface,
-		Options:           options,
-	}
-
-	return c.NetworkInterfacesCreateOrUpdateBehavior.Invoke(input, func(input *NetworkInterfaceCreateOrUpdateInput) (*armnetwork.InterfacesClientCreateOrUpdateResponse, error) {
-		iface := input.Interface
-		iface.Name = lo.ToPtr(input.InterfaceName)
-		id := MakeNetworkInterfaceID(input.ResourceGroupName, input.InterfaceName)
-		iface.ID = lo.ToPtr(id)
-		c.NetworkInterfaces.Store(id, iface)
-		return &armnetwork.InterfacesClientCreateOrUpdateResponse{
-			Interface: iface,
-		}, nil
-	})
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 func (c *NetworkInterfacesAPI) Get(_ context.Context, resourceGroupName string, interfaceName string, _ *armnetwork.InterfacesClientGetOptions) (armnetwork.InterfacesClientGetResponse, error) {
-	id := MakeNetworkInterfaceID(resourceGroupName, interfaceName)
-	iface, ok := c.NetworkInterfaces.Load(id)
-	if !ok {
-		return armnetwork.InterfacesClientGetResponse{}, &azcore.ResponseError{StatusCode: http.StatusNotFound}
-	}
-	return armnetwork.InterfacesClientGetResponse{
-		Interface: iface,
-	}, nil
+	_ = "STUB: not implemented"
+	return *new(armnetwork.InterfacesClientGetResponse), nil
 }
 
 func (c *NetworkInterfacesAPI) BeginDelete(_ context.Context, resourceGroupName string, interfaceName string, _ *armnetwork.InterfacesClientBeginDeleteOptions) (*runtime.Poller[armnetwork.InterfacesClientDeleteResponse], error) {
-	input := &NetworkInterfaceDeleteInput{
-		ResourceGroupName: resourceGroupName,
-		InterfaceName:     interfaceName,
-	}
-	return c.NetworkInterfacesDeleteBehavior.Invoke(input, func(input *NetworkInterfaceDeleteInput) (*armnetwork.InterfacesClientDeleteResponse, error) {
-		id := MakeNetworkInterfaceID(input.ResourceGroupName, input.InterfaceName)
-		c.NetworkInterfaces.Delete(id)
-		return &armnetwork.InterfacesClientDeleteResponse{}, nil
-	})
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 func (c *NetworkInterfacesAPI) UpdateTags(
@@ -122,36 +83,15 @@ func (c *NetworkInterfacesAPI) UpdateTags(
 	tags armnetwork.TagsObject,
 	options *armnetwork.InterfacesClientUpdateTagsOptions,
 ) (armnetwork.InterfacesClientUpdateTagsResponse, error) {
-	input := &NetworkInterfaceUpdateTagsInput{
-		ResourceGroupName: resourceGroupName,
-		InterfaceName:     interfaceName,
-		Tags:              tags,
-		Options:           options,
-	}
-	return c.NetworkInterfacesUpdateTagsBehavior.Invoke(input, func(input *NetworkInterfaceUpdateTagsInput) (armnetwork.InterfacesClientUpdateTagsResponse, error) {
-		id := MakeNetworkInterfaceID(resourceGroupName, interfaceName)
-		instance, ok := c.NetworkInterfaces.Load(id)
-		if !ok {
-			return armnetwork.InterfacesClientUpdateTagsResponse{}, &azcore.ResponseError{StatusCode: http.StatusNotFound}
-		}
-
-		iface := instance
-
-		if input.Tags.Tags != nil {
-			// Tags are full-replace if they're specified
-			iface.Tags = maps.Clone(input.Tags.Tags)
-		}
-
-		c.NetworkInterfaces.Store(id, iface)
-
-		return armnetwork.InterfacesClientUpdateTagsResponse{
-			Interface: iface,
-		}, nil
-	})
+	_ = "STUB: not implemented"
+	return *new(armnetwork.InterfacesClientUpdateTagsResponse), nil
 }
+
+// Tags are full-replace if they're specified
 
 func MakeNetworkInterfaceID(resourceGroupName, interfaceName string) string {
-	const subscriptionID = "subscriptionID" // not important for fake
-	const idFormat = "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/networkInterfaces/%s"
-	return fmt.Sprintf(idFormat, subscriptionID, resourceGroupName, interfaceName)
+	_ = "STUB: not implemented"
+	return ""
 }
+
+// not important for fake

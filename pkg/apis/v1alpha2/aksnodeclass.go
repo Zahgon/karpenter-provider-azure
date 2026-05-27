@@ -17,10 +17,6 @@ limitations under the License.
 package v1alpha2
 
 import (
-	"fmt"
-
-	"github.com/mitchellh/hashstructure/v2"
-	"github.com/samber/lo"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	karpv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 )
@@ -677,13 +673,7 @@ type AKSNodeClass struct {
 // 3. A field is removed from the hash calculations
 const AKSNodeClassHashVersion = "v3"
 
-func (in *AKSNodeClass) Hash() string {
-	return fmt.Sprint(lo.Must(hashstructure.Hash(in.Spec, hashstructure.FormatV2, &hashstructure.HashOptions{
-		SlicesAsSets:    true,
-		IgnoreZeroValue: true,
-		ZeroNil:         true,
-	})))
-}
+func (in *AKSNodeClass) Hash() string { _ = "STUB: not implemented"; return "" }
 
 // AKSNodeClassList contains a list of AKSNodeClass
 // +kubebuilder:object:root=true
@@ -695,12 +685,7 @@ type AKSNodeClassList struct {
 
 // GetEncryptionAtHost returns whether encryption at host is enabled for the node class.
 // Returns false if Security or EncryptionAtHost is nil.
-func (in *AKSNodeClass) GetEncryptionAtHost() bool {
-	if in.Spec.Security != nil && in.Spec.Security.EncryptionAtHost != nil {
-		return *in.Spec.Security.EncryptionAtHost
-	}
-	return false
-}
+func (in *AKSNodeClass) GetEncryptionAtHost() bool { _ = "STUB: not implemented"; return false }
 
 // IsLocalDNSEnabled returns whether LocalDNS should be enabled for this node class.
 // The decision is sourced from Status.LocalDNSState, which is resolved by the
@@ -712,24 +697,18 @@ func (in *AKSNodeClass) GetEncryptionAtHost() bool {
 //
 // If Status.LocalDNSState has not yet been written, this returns false as a
 // safe default.
-func (in *AKSNodeClass) IsLocalDNSEnabled() bool {
-	return lo.FromPtr(in.Status.LocalDNSState) == LocalDNSStateEnabled
-}
+func (in *AKSNodeClass) IsLocalDNSEnabled() bool { _ = "STUB: not implemented"; return false }
 
 // GetGPUMode returns the effective GPU mode.
 // Defaults to Driver if gpu or gpu.mode is nil, ensuring
 // backward compatibility (existing users always got drivers installed).
-func (in *AKSNodeClass) GetGPUMode() GPUMode {
-	if in.Spec.GPU == nil || in.Spec.GPU.Mode == nil {
-		return GPUModeDriver
-	}
-	return *in.Spec.GPU.Mode
-}
+func (in *AKSNodeClass) GetGPUMode() GPUMode { _ = "STUB: not implemented"; return *new(GPUMode) }
 
 // IsGPUDriverInstallationEnabled returns whether GPU driver installation
 // is enabled. Returns true when gpu is nil, gpu.mode is nil,
 // or mode is "Driver". Returns false only when explicitly
 // set to "None".
 func (in *AKSNodeClass) IsGPUDriverInstallationEnabled() bool {
-	return in.GetGPUMode() != GPUModeNone
+	_ = "STUB: not implemented"
+	return false
 }

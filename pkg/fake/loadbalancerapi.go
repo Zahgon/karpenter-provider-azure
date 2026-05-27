@@ -18,14 +18,11 @@ package fake
 
 import (
 	"context"
-	"fmt"
-	"sort"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	fakesync "github.com/Azure/karpenter-provider-azure/pkg/fake/sync"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/loadbalancer"
-	"github.com/samber/lo"
 )
 
 type LoadBalancersBehavior struct {
@@ -40,62 +37,32 @@ type LoadBalancersAPI struct {
 }
 
 // Reset must be called between tests otherwise tests will pollute each other.
-func (api *LoadBalancersAPI) Reset() {
-	api.LoadBalancers.Clear()
-}
+func (api *LoadBalancersAPI) Reset() { _ = "STUB: not implemented"; return }
 
 func (api *LoadBalancersAPI) Get(_ context.Context, resourceGroupName string, loadBalancerName string, _ *armnetwork.LoadBalancersClientGetOptions) (armnetwork.LoadBalancersClientGetResponse, error) {
-	id := MakeLoadBalancerID(resourceGroupName, loadBalancerName)
-	lb, ok := api.LoadBalancers.Load(id)
-	if !ok {
-		return armnetwork.LoadBalancersClientGetResponse{}, fmt.Errorf("not found")
-	}
-	return armnetwork.LoadBalancersClientGetResponse{
-		LoadBalancer: lb,
-	}, nil
+	_ = "STUB: not implemented"
+	return *new(armnetwork.LoadBalancersClientGetResponse), nil
 }
 
 func (api *LoadBalancersAPI) NewListPager(_ string, _ *armnetwork.LoadBalancersClientListOptions) *runtime.Pager[armnetwork.LoadBalancersClientListResponse] {
-	pagingHandler := runtime.PagingHandler[armnetwork.LoadBalancersClientListResponse]{
-		More: func(page armnetwork.LoadBalancersClientListResponse) bool {
-			return false // TODO: It might be ideal if we had a MockPager which sometimes simulated multiple pages of results to ensure we handle that correctly
-		},
-		Fetcher: func(ctx context.Context, _ *armnetwork.LoadBalancersClientListResponse) (armnetwork.LoadBalancersClientListResponse, error) {
-			output := armnetwork.LoadBalancerListResult{
-				Value: []*armnetwork.LoadBalancer{},
-			}
-			api.LoadBalancers.Range(func(key string, value armnetwork.LoadBalancer) bool {
-				output.Value = append(output.Value, &value)
-
-				return true
-			})
-
-			// Sort the result according to ID so that we have a stable base to write asserts upon
-			sort.Slice(output.Value, func(i, j int) bool {
-				l := output.Value[i]
-				r := output.Value[j]
-
-				return lo.FromPtr(l.ID) < lo.FromPtr(r.ID)
-			})
-
-			return armnetwork.LoadBalancersClientListResponse{
-				LoadBalancerListResult: output,
-			}, nil
-		},
-	}
-	return runtime.NewPager(pagingHandler)
+	_ = "STUB: not implemented"
+	return nil
 }
+
+// TODO: It might be ideal if we had a MockPager which sometimes simulated multiple pages of results to ensure we handle that correctly
+
+// Sort the result according to ID so that we have a stable base to write asserts upon
 
 func MakeLoadBalancerID(resourceGroupName, loadBalancerName string) string {
-	const subscriptionID = "subscriptionID" // not important for fake
-	const idFormat = "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers/%s"
-
-	return fmt.Sprintf(idFormat, subscriptionID, resourceGroupName, loadBalancerName)
+	_ = "STUB: not implemented"
+	return ""
 }
+
+// not important for fake
 
 func MakeBackendAddressPoolID(resourceGroupName, loadBalancerName string, backendAddressPoolName string) string {
-	const subscriptionID = "subscriptionID" // not important for fake
-	const idFormat = "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers/%s/backendAddressPools/%s"
-
-	return fmt.Sprintf(idFormat, subscriptionID, resourceGroupName, loadBalancerName, backendAddressPoolName)
+	_ = "STUB: not implemented"
+	return ""
 }
+
+// not important for fake

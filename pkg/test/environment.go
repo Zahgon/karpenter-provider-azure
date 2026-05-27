@@ -18,7 +18,6 @@ package test
 
 import (
 	"context"
-	"time"
 
 	gomegaformat "github.com/onsi/gomega/format"
 	"github.com/samber/lo"
@@ -32,15 +31,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	coretest "sigs.k8s.io/karpenter/pkg/test"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v9"
-	"github.com/Azure/karpenter-provider-azure/pkg/auth"
 	azurecache "github.com/Azure/karpenter-provider-azure/pkg/cache"
-	"github.com/Azure/karpenter-provider-azure/pkg/consts"
 	"github.com/Azure/karpenter-provider-azure/pkg/fake"
-	"github.com/Azure/karpenter-provider-azure/pkg/operator/options"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/allocationstrategy"
-	"github.com/Azure/karpenter-provider-azure/pkg/providers/azclient"
-	"github.com/Azure/karpenter-provider-azure/pkg/providers/azclient/aksmachinesheaderbatch"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/imagefamily"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/instance"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/instance/machinecache"
@@ -50,8 +43,6 @@ import (
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/loadbalancer"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/networksecuritygroup"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/pricing"
-	"github.com/Azure/karpenter-provider-azure/pkg/utils/batcher"
-	"github.com/Azure/karpenter-provider-azure/pkg/utils/zones"
 )
 
 func init() {
@@ -122,275 +113,43 @@ type Environment struct {
 }
 
 func NewEnvironment(ctx context.Context, env *coretest.Environment) *Environment {
-	return NewRegionalEnvironment(ctx, env, fake.Region, false)
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func NewEnvironmentNonZonal(ctx context.Context, env *coretest.Environment) *Environment {
-	return NewRegionalEnvironment(ctx, env, fake.RegionNonZonal, true)
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func NewRegionalEnvironment(ctx context.Context, env *coretest.Environment, region string, nonZonal bool) *Environment {
-	testOptions := options.FromContext(ctx)
-
-	azureEnv := lo.Must(auth.EnvironmentFromName("AzurePublicCloud"))
-
-	// API
-	var auxTokenPolicy *auth.AuxiliaryTokenPolicy
-	var auxiliaryTokenServer *fake.AuxiliaryTokenServer
-	if testOptions.UseSIG {
-		auxiliaryTokenServer = fake.NewAuxiliaryTokenServer("test-token", time.Now().Add(1*time.Hour), time.Now().Add(5*time.Minute))
-		auxTokenPolicy = auth.NewAuxiliaryTokenPolicy(auxiliaryTokenServer, testOptions.SIGAccessTokenServerURL, auth.TokenScope(azureEnv.Cloud))
-	}
-	virtualMachinesAPI := &fake.VirtualMachinesAPI{AuxiliaryTokenPolicy: auxTokenPolicy}
-
-	networkInterfacesAPI := &fake.NetworkInterfacesAPI{}
-	virtualMachinesExtensionsAPI := &fake.VirtualMachineExtensionsAPI{}
-	pricingAPI := &fake.PricingAPI{}
-	skusAPI := &fake.ResourceSKUsAPI{Location: region}
-	communityImageVersionsAPI := &fake.CommunityGalleryImageVersionsAPI{}
-	loadBalancersAPI := &fake.LoadBalancersAPI{}
-	networkSecurityGroupAPI := &fake.NetworkSecurityGroupAPI{}
-	nodeImageVersionsAPI := &fake.NodeImageVersionsAPI{}
-	nodeBootstrappingAPI := &fake.NodeBootstrappingAPI{}
-	subscriptionAPI := &fake.SubscriptionsAPI{}
-
-	aksDataStorage := fake.NewAKSDataStorage()
-	aksAgentPoolsAPI := fake.NewAKSAgentPoolsAPI(aksDataStorage)
-	aksMachinesAPI := fake.NewAKSMachinesAPI(aksDataStorage)
-
-	azureResourceGraphAPI := fake.NewAzureResourceGraphAPI(resourceGroup, virtualMachinesAPI, networkInterfacesAPI)
-	// Cache
-	kubernetesVersionCache := cache.New(azurecache.KubernetesVersionTTL, azurecache.DefaultCleanupInterval)
-	nodeImagesCache := cache.New(imagefamily.ImageExpirationInterval, imagefamily.ImageCacheCleaningInterval)
-	instanceTypeCache := cache.New(instancetype.InstanceTypesCacheTTL, azurecache.DefaultCleanupInterval)
-	loadBalancerCache := cache.New(loadbalancer.LoadBalancersCacheTTL, azurecache.DefaultCleanupInterval)
-	unavailableOfferingsCache := azurecache.NewUnavailableOfferings()
-
-	// Providers
-	pricingProvider := pricing.NewProvider(ctx, azureEnv, pricingAPI, region, make(chan struct{}))
-	kubernetesVersionProvider := kubernetesversion.NewKubernetesVersionProvider(env.KubernetesInterface, kubernetesVersionCache)
-	imageFamilyProvider := imagefamily.NewProvider(communityImageVersionsAPI, region, subscription, nodeImageVersionsAPI, nodeImagesCache)
-	instanceTypesProvider := instancetype.NewDefaultProvider(
-		region,
-		instanceTypeCache,
-		skusAPI,
-		pricingProvider,
-		unavailableOfferingsCache)
-	imageFamilyResolver := imagefamily.NewDefaultResolver(env.Client, imageFamilyProvider, instanceTypesProvider, nodeBootstrappingAPI)
-	networkSecurityGroupProvider := networksecuritygroup.NewProvider(
-		networkSecurityGroupAPI,
-		testOptions.NodeResourceGroup,
-	)
-	launchTemplateProvider := launchtemplate.NewProvider(
-		ctx,
-		imageFamilyResolver,
-		imageFamilyProvider,
-		networkSecurityGroupProvider,
-		lo.ToPtr("ca-bundle"),
-		testOptions.ClusterEndpoint,
-		"test-tenant",
-		subscription,
-		"test-cluster-resource-group",
-		"test-kubelet-identity-client-id",
-		testOptions.NodeResourceGroup,
-		region,
-		testOptions.ProvisionMode,
-	)
-	loadBalancerProvider := loadbalancer.NewProvider(
-		loadBalancersAPI,
-		loadBalancerCache,
-		testOptions.NodeResourceGroup,
-	)
-	subnetsAPI := &fake.SubnetsAPI{}
-	diskEncryptionSetsAPI := &fake.DiskEncryptionSetsAPI{}
-
-	// Set up batching if provision mode is header batch
-	var aksMachinesBatchAPI aksmachinesheaderbatch.AKSMachinesHeaderBatchAPI
-	if testOptions.ProvisionMode == consts.ProvisionModeAKSMachineAPIHeaderBatch {
-		aksMachinesBatchAPI = aksmachinesheaderbatch.NewClient(ctx, aksMachinesAPI, batcher.Options{
-			IdleTimeout:  time.Duration(testOptions.BatchIdleTimeoutMS) * time.Millisecond,
-			MaxTimeout:   time.Duration(testOptions.BatchMaxTimeoutMS) * time.Millisecond,
-			MaxBatchSize: testOptions.MaxBatchSize,
-		})
-	}
-
-	azClient := azclient.NewAZClientFromAPI(
-		virtualMachinesAPI,
-		azureResourceGraphAPI,
-		aksMachinesAPI,
-		aksMachinesBatchAPI,
-		aksAgentPoolsAPI,
-		virtualMachinesExtensionsAPI,
-		networkInterfacesAPI,
-		subnetsAPI,
-		diskEncryptionSetsAPI,
-		loadBalancersAPI,
-		networkSecurityGroupAPI,
-		communityImageVersionsAPI,
-		nodeImageVersionsAPI,
-		nodeBootstrappingAPI,
-		skusAPI,
-		subscriptionAPI,
-	)
-	allocationStrategyProvider := allocationstrategy.NewProvider()
-	vmInstanceProvider := instance.NewDefaultVMProvider(
-		azClient,
-		instanceTypesProvider,
-		allocationStrategyProvider,
-		launchTemplateProvider,
-		loadBalancerProvider,
-		networkSecurityGroupProvider,
-		unavailableOfferingsCache,
-		region,
-		testOptions.NodeResourceGroup,
-		subscription,
-		testOptions.ProvisionMode,
-		testOptions.DiskEncryptionSetID,
-		azureEnv,
-	)
-
-	if testOptions.IsAKSMachineAPIMode() && testOptions.AKSMachinesPoolName != "" {
-		// For this configuration, we assume the AKS machines pool already exists
-		aksDataStorage.AgentPools.Store(
-			fake.MkAgentPoolID(testOptions.NodeResourceGroup, clusterName, testOptions.AKSMachinesPoolName),
-			armcontainerservice.AgentPool{
-				Name: lo.ToPtr(testOptions.AKSMachinesPoolName),
-				Properties: &armcontainerservice.ManagedClusterAgentPoolProfileProperties{
-					Mode: lo.ToPtr(armcontainerservice.AgentPoolModeMachines),
-				},
-			},
-		)
-	}
-
-	batchCreationEnabled := testOptions.ProvisionMode == consts.ProvisionModeAKSMachineAPIHeaderBatch
-
-	aksMachineCache := machinecache.New(
-		ctx,
-		azClient.AKSMachinesClient(),
-		testOptions.NodeResourceGroup,
-		clusterName,
-		testOptions.AKSMachinesPoolName,
-		machinecache.WithTTL(1*time.Second),
-		machinecache.WithPollInterval(1*time.Millisecond),
-	)
-
-	aksMachineInstanceProvider := instance.NewAKSMachineProvider(
-		azClient,
-		instanceTypesProvider,
-		allocationStrategyProvider,
-		imageFamilyResolver,
-		unavailableOfferingsCache,
-		subscription,
-		testOptions.NodeResourceGroup,
-		clusterName,
-		testOptions.AKSMachinesPoolName,
-		region,
-		batchCreationEnabled,
-		aksMachineCache,
-	)
-
-	store := nodeoverlay.NewInstanceTypeStore()
-
-	// Populate the instance type cache before returning the environment, as many tests assume it's populated and it simplifies test setup.
-	// We can update it in individual tests as needed.
-	lo.Must0(instanceTypesProvider.UpdateInstanceTypes(ctx))
-
-	// Seed the managed NSG
-	nsg := MakeNetworkSecurityGroup(testOptions.NodeResourceGroup, "aks-agentpool-00000000-nsg")
-	networkSecurityGroupAPI.NSGs.Store(lo.FromPtr(nsg.ID), nsg)
-
-	return &Environment{
-		VirtualMachinesAPI:          virtualMachinesAPI,
-		AuxiliaryTokenServer:        auxiliaryTokenServer,
-		AzureResourceGraphAPI:       azureResourceGraphAPI,
-		VirtualMachineExtensionsAPI: virtualMachinesExtensionsAPI,
-		NetworkInterfacesAPI:        networkInterfacesAPI,
-		CommunityImageVersionsAPI:   communityImageVersionsAPI,
-		NodeImageVersionsAPI:        nodeImageVersionsAPI,
-		LoadBalancersAPI:            loadBalancersAPI,
-		NetworkSecurityGroupAPI:     networkSecurityGroupAPI,
-		SubnetsAPI:                  subnetsAPI,
-		DiskEncryptionSetsAPI:       diskEncryptionSetsAPI,
-		SKUsAPI:                     skusAPI,
-		PricingAPI:                  pricingAPI,
-		SubscriptionAPI:             subscriptionAPI,
-		NodeBootstrappingAPI:        nodeBootstrappingAPI,
-		AKSMachinesAPI:              aksMachinesAPI,
-		AKSAgentPoolsAPI:            aksAgentPoolsAPI,
-		DynamicInterface:            dynamic.NewForConfigOrDie(env.Config),
-
-		AKSDataStorage: aksDataStorage,
-
-		AKSMachineCache:           aksMachineCache,
-		KubernetesVersionCache:    kubernetesVersionCache,
-		NodeImagesCache:           nodeImagesCache,
-		InstanceTypeCache:         instanceTypeCache,
-		UnavailableOfferingsCache: unavailableOfferingsCache,
-		LoadBalancerCache:         loadBalancerCache,
-
-		InstanceTypesProvider:        instanceTypesProvider,
-		VMInstanceProvider:           vmInstanceProvider,
-		AKSMachineProvider:           aksMachineInstanceProvider,
-		PricingProvider:              pricingProvider,
-		KubernetesVersionProvider:    kubernetesVersionProvider,
-		ImageProvider:                imageFamilyProvider,
-		ImageResolver:                imageFamilyResolver,
-		LaunchTemplateProvider:       launchTemplateProvider,
-		LoadBalancerProvider:         loadBalancerProvider,
-		NetworkSecurityGroupProvider: networkSecurityGroupProvider,
-		AllocationStrategyProvider:   allocationStrategyProvider,
-
-		InstanceTypeStore: store,
-
-		nonZonal:       nonZonal,
-		SubscriptionID: subscription,
-		region:         region,
-		coreEnv:        env,
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
-func (env *Environment) Reset(ctx context.Context) {
-	env.VirtualMachinesAPI.Reset()
-	if env.AuxiliaryTokenServer != nil {
-		env.AuxiliaryTokenServer.Reset()
-	}
-	env.AzureResourceGraphAPI.Reset()
-	env.VirtualMachineExtensionsAPI.Reset()
-	env.NetworkInterfacesAPI.Reset()
-	env.LoadBalancersAPI.Reset()
-	env.NetworkSecurityGroupAPI.Reset()
-	env.SubnetsAPI.Reset()
-	env.CommunityImageVersionsAPI.Reset()
-	env.NodeImageVersionsAPI.Reset()
-	env.NodeBootstrappingAPI.Reset()
-	env.SKUsAPI.Reset()
-	env.PricingAPI.Reset()
-	env.PricingProvider.Reset()
-	env.AKSMachinesAPI.Reset()
-	env.AKSAgentPoolsAPI.Reset()
+// API
 
-	env.KubernetesVersionCache.Flush()
-	env.NodeImagesCache.Flush()
-	env.InstanceTypeCache.Flush()
-	env.UnavailableOfferingsCache.Flush()
-	env.AKSMachineCache.InvalidateAll()
-	env.LoadBalancerCache.Flush()
+// Cache
 
-	// Re-seed the managed NSG so launchtemplate provider can resolve it
-	nodeResourceGroup := options.FromContext(ctx).NodeResourceGroup
-	nsg := MakeNetworkSecurityGroup(nodeResourceGroup, "aks-agentpool-00000000-nsg")
-	env.NetworkSecurityGroupAPI.NSGs.Store(lo.FromPtr(nsg.ID), nsg)
-}
+// Providers
 
-func (env *Environment) Zones() []string {
-	if env.nonZonal {
-		return []string{zones.Regional}
-	} else {
-		return []string{fake.Region + "-1", fake.Region + "-2", fake.Region + "-3"}
-	}
-}
+// Set up batching if provision mode is header batch
+
+// For this configuration, we assume the AKS machines pool already exists
+
+// Populate the instance type cache before returning the environment, as many tests assume it's populated and it simplifies test setup.
+// We can update it in individual tests as needed.
+
+// Seed the managed NSG
+
+func (env *Environment) Reset(ctx context.Context) { _ = "STUB: not implemented"; return }
+
+// Re-seed the managed NSG so launchtemplate provider can resolve it
+
+func (env *Environment) Zones() []string { _ = "STUB: not implemented"; return nil }
 
 // Client returns the controller-runtime client from the underlying core test environment.
 func (env *Environment) Client() client.Client {
-	return env.coreEnv.Client
+	_ = "STUB: not implemented"
+	return *new(client.Client)
 }

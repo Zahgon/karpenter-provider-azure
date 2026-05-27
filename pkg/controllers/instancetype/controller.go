@@ -21,11 +21,7 @@ import (
 	"time"
 
 	"github.com/awslabs/operatorpkg/reconciler"
-	"github.com/awslabs/operatorpkg/singleton"
-	controllerruntime "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/karpenter/pkg/operator/injection"
 
 	instancetypeprovider "github.com/Azure/karpenter-provider-azure/pkg/providers/instancetype"
 )
@@ -42,25 +38,16 @@ type Controller struct {
 }
 
 func NewController(instanceTypeProvider instancetypeprovider.Provider) *Controller {
-	return &Controller{
-		instanceTypeProvider: instanceTypeProvider,
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func (c *Controller) Reconcile(ctx context.Context) (reconciler.Result, error) {
-	ctx = injection.WithControllerName(ctx, "instancetype")
-
-	if err := c.instanceTypeProvider.UpdateInstanceTypes(ctx); err != nil {
-		log.FromContext(ctx).Error(err, "updating instance types")
-		return reconciler.Result{}, err
-	}
-	log.FromContext(ctx).V(1).Info("updated instance types")
-	return reconciler.Result{RequeueAfter: InstanceTypesRefreshInterval}, nil
+	_ = "STUB: not implemented"
+	return *new(reconciler.Result), nil
 }
 
 func (c *Controller) Register(_ context.Context, m manager.Manager) error {
-	return controllerruntime.NewControllerManagedBy(m).
-		Named("instancetype").
-		WatchesRawSource(singleton.Source()).
-		Complete(singleton.AsReconciler(c))
+	_ = "STUB: not implemented"
+	return nil
 }

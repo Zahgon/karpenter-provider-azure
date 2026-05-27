@@ -19,12 +19,8 @@ package allocationstrategy
 import (
 	"context"
 
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	corecloudprovider "sigs.k8s.io/karpenter/pkg/cloudprovider"
 	"sigs.k8s.io/karpenter/pkg/scheduling"
-
-	"github.com/Azure/karpenter-provider-azure/pkg/logging"
-	"github.com/Azure/karpenter-provider-azure/pkg/providers/allocationstrategy/stages"
 )
 
 type Provider interface {
@@ -50,35 +46,17 @@ var _ Provider = &DefaultProvider{}
 
 type DefaultProvider struct{}
 
-func NewProvider() *DefaultProvider {
-	return &DefaultProvider{}
-}
+func NewProvider() *DefaultProvider { _ = "STUB: not implemented"; return nil }
 
 func (p *DefaultProvider) Allocate(ctx context.Context, instanceTypes []*corecloudprovider.InstanceType, requirements scheduling.Requirements) *Selection {
-	candidates := p.FilterInstanceOfferings(ctx, NewInstanceOfferings(instanceTypes), requirements)
-	if len(candidates) == 0 {
-		return nil
-	}
-	best := candidates[0]
-	if best.InstanceType == nil || len(best.Offerings) == 0 {
-		return nil
-	}
-	log.FromContext(ctx).Info("selected instance type", logging.InstanceType, best.InstanceType.Name)
-	return &Selection{
-		InstanceType: best.InstanceType,
-		Offering:     best.Offerings[0],
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func (p *DefaultProvider) FilterInstanceOfferings(ctx context.Context, instanceOfferings []InstanceOffering, requirements scheduling.Requirements) []InstanceOffering {
-	stages := []stages.Stage{
-		stages.NewAvailabilityCompatibilityFilterStage(requirements),
-		// Keep offering ranking in a single stage so future customizable allocation strategy work can swap or parameterize the ranker
-		// without introducing multiple reorder stages where the last reorder wins.
-		stages.NewDefaultOfferingRankStage(),
-	}
-	for _, stage := range stages {
-		instanceOfferings = stage.Process(ctx, instanceOfferings)
-	}
-	return instanceOfferings
+	_ = "STUB: not implemented"
+	return nil
 }
+
+// Keep offering ranking in a single stage so future customizable allocation strategy work can swap or parameterize the ranker
+// without introducing multiple reorder stages where the last reorder wins.

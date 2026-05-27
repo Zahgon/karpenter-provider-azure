@@ -18,11 +18,7 @@ package offerings
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/karpenter-provider-azure/pkg/cache"
 	"github.com/Azure/skewer"
 	corecloudprovider "sigs.k8s.io/karpenter/pkg/cloudprovider"
@@ -35,22 +31,13 @@ type HandlableError struct {
 	Message string
 }
 
-func (e *HandlableError) Error() string {
-	return fmt.Sprintf("%s: %s", e.Code, e.Message)
-}
+func (e *HandlableError) Error() string { _ = "STUB: not implemented"; return "" }
 
-func ErrorToHandlableError(err error) *HandlableError {
-	var respErr *azcore.ResponseError
-	if !errors.As(err, &respErr) {
-		return nil
-	}
-	return &HandlableError{
-		Code:    respErr.ErrorCode,
-		Message: respErr.Error(), // Note: this is not truly extracting the message, but rather dump the whole error in.
-		// This is okay for now, as all handling logic just does substring match on the message, or care only about ErrorCode (ideal in long run).
-		// TODO: rework this? Once we revisit this whole module to perhaps share the handling logic to azure-sdk-for-go-extensions.
-	}
-}
+func ErrorToHandlableError(err error) *HandlableError { _ = "STUB: not implemented"; return nil }
+
+// Note: this is not truly extracting the message, but rather dump the whole error in.
+// This is okay for now, as all handling logic just does substring match on the message, or care only about ErrorCode (ideal in long run).
+// TODO: rework this? Once we revisit this whole module to perhaps share the handling logic to azure-sdk-for-go-extensions.
 
 type aksMachineBeginCreateErrorHandlerEntry struct {
 	match  func(*HandlableError) bool
@@ -66,27 +53,12 @@ type AKSMachineBeginCreateErrorHandler struct {
 // NewAKSMachineBeginCreateErrorHandler creates a handler for AKS Machine API sync-phase errors.
 // TODO: consider sharing this on azure-sdk-for-go-extensions like other error handlers.
 func NewAKSMachineBeginCreateErrorHandler(unavailableOfferings *cache.UnavailableOfferings) *AKSMachineBeginCreateErrorHandler {
-	return &AKSMachineBeginCreateErrorHandler{
-		unavailableOfferings: unavailableOfferings,
-		handlerEntries: []aksMachineBeginCreateErrorHandlerEntry{
-			{
-				match:  isSKUNotAvailableForSubscription,
-				handle: handleSKUNotAvailableForSubscriptionError,
-			},
-			{
-				match:  isSKUNotAvailableForSubscriptionBadRequest,
-				handle: handleSKUNotAvailableForSubscriptionError,
-			},
-		},
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func (h *AKSMachineBeginCreateErrorHandler) Handle(ctx context.Context, sku *skewer.SKU, instanceType *corecloudprovider.InstanceType, zone, capacityType string, he *HandlableError) error {
-	for _, handler := range h.handlerEntries {
-		if handler.match(he) {
-			return handler.handle(ctx, h.unavailableOfferings, sku, instanceType, zone, capacityType, he.Code, he.Message)
-		}
-	}
+	_ = "STUB: not implemented"
 	return nil
 }
 
@@ -104,22 +76,21 @@ func handleSKUNotAvailableForSubscriptionError(
 	errorCode,
 	errorMessage string,
 ) error {
-	markAllPlacementsUnavailableForBothCapacityTypes(ctx, unavailableOfferings, sku, instanceType, SKUNotAvailableReason, SKUNotAvailableOnDemandTTL)
-
-	return fmt.Errorf(
-		"VM size %s is not supported for this subscription in this location, for more details please visit: https://aka.ms/aks/vm-size-selector",
-		instanceType.Name)
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // For "Virtual Machine size: '%s' is not supported for subscription %s in location '%[3]s'. %s. Please refer to aka.ms/aks/vm-size-selector to find supported VM sizes in location '%[3]s'."
 // ASSUMPTION: this error occurring means the whole VM family is not available.
 func isSKUNotAvailableForSubscription(he *HandlableError) bool {
-	return he.Code == "VMSizeNotSupported"
+	_ = "STUB: not implemented"
+	return false
 }
 
 // For "Virtual Machine size: '%s' is not supported for subscription %s in location '%[3]s'. %s. Please refer to aka.ms/aks/vm-size-selector to find supported VM sizes in location '%[3]s'."
 // Similar to IsSKUNotAvailableForSubscription, but this different error code is another possible variant.
 // ASSUMPTION: this error occurring means the whole VM family is not available.
 func isSKUNotAvailableForSubscriptionBadRequest(he *HandlableError) bool {
-	return he.Code == "BadRequest" && strings.Contains(he.Message, "is not supported for subscription")
+	_ = "STUB: not implemented"
+	return false
 }

@@ -18,14 +18,11 @@ package fake
 
 import (
 	"context"
-	"fmt"
-	"sort"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	fakesync "github.com/Azure/karpenter-provider-azure/pkg/fake/sync"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/networksecuritygroup"
-	"github.com/samber/lo"
 )
 
 type NetworkSecurityGroupBevhavior struct {
@@ -41,61 +38,35 @@ type NetworkSecurityGroupAPI struct {
 
 // Reset must be called between tests otherwise tests will pollute each other.
 func (api *NetworkSecurityGroupAPI) Reset() {
-	api.NSGs.Clear()
+	_ = "STUB: not implemented"
+
+	// Get implements networksecuritygroup.API.
+	return
 }
 
-// Get implements networksecuritygroup.API.
 func (api *NetworkSecurityGroupAPI) Get(
 	ctx context.Context,
 	resourceGroupName string,
 	securityGroupName string,
 	options *armnetwork.SecurityGroupsClientGetOptions,
 ) (armnetwork.SecurityGroupsClientGetResponse, error) {
-	id := MakeNetworkSecurityGroupID(resourceGroupName, securityGroupName)
-	nsg, ok := api.NSGs.Load(id)
-	if !ok {
-		return armnetwork.SecurityGroupsClientGetResponse{}, fmt.Errorf("not found")
-	}
-	return armnetwork.SecurityGroupsClientGetResponse{
-		SecurityGroup: nsg,
-	}, nil
+	_ = "STUB: not implemented"
+	return *new(armnetwork.SecurityGroupsClientGetResponse), nil
 }
 
 // NewListPager implements networksecuritygroup.API.
 func (api *NetworkSecurityGroupAPI) NewListPager(resourceGroupName string, options *armnetwork.SecurityGroupsClientListOptions) *runtime.Pager[armnetwork.SecurityGroupsClientListResponse] {
-	pagingHandler := runtime.PagingHandler[armnetwork.SecurityGroupsClientListResponse]{
-		More: func(page armnetwork.SecurityGroupsClientListResponse) bool {
-			return false // TODO: It might be ideal if we had a MockPager which sometimes simulated multiple pages of results to ensure we handle that correctly
-		},
-		Fetcher: func(ctx context.Context, _ *armnetwork.SecurityGroupsClientListResponse) (armnetwork.SecurityGroupsClientListResponse, error) {
-			output := armnetwork.SecurityGroupListResult{
-				Value: []*armnetwork.SecurityGroup{},
-			}
-			api.NSGs.Range(func(key string, value armnetwork.SecurityGroup) bool {
-				output.Value = append(output.Value, &value)
-
-				return true
-			})
-
-			// Sort the result according to ID so that we have a stable base to write asserts upon
-			sort.Slice(output.Value, func(i, j int) bool {
-				l := output.Value[i]
-				r := output.Value[j]
-
-				return lo.FromPtr(l.ID) < lo.FromPtr(r.ID)
-			})
-
-			return armnetwork.SecurityGroupsClientListResponse{
-				SecurityGroupListResult: output,
-			}, nil
-		},
-	}
-	return runtime.NewPager(pagingHandler)
+	_ = "STUB: not implemented"
+	return nil
 }
+
+// TODO: It might be ideal if we had a MockPager which sometimes simulated multiple pages of results to ensure we handle that correctly
+
+// Sort the result according to ID so that we have a stable base to write asserts upon
 
 func MakeNetworkSecurityGroupID(resourceGroupName, networkSecurityGroupName string) string {
-	const subscriptionID = "12345678-1234-1234-1234-123456789012" // TODO: This is duplicated from other places, we should consider putting it in a common place
-	const idFormat = "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/networkSecurityGroups/%s"
-
-	return fmt.Sprintf(idFormat, subscriptionID, resourceGroupName, networkSecurityGroupName)
+	_ = "STUB: not implemented"
+	return ""
 }
+
+// TODO: This is duplicated from other places, we should consider putting it in a common place

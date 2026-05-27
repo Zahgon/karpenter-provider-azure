@@ -16,11 +16,6 @@ limitations under the License.
 
 package utils
 
-import (
-	"fmt"
-	"strings"
-)
-
 // this parsing function replaces three different functions in different packages that all had bugs. Please don't use a regex to parse these
 type VnetSubnetResource struct {
 	SubscriptionID    string
@@ -30,22 +25,15 @@ type VnetSubnetResource struct {
 }
 
 func (v VnetSubnetResource) IsSameVNET(cmp VnetSubnetResource) bool {
-	if v.SubscriptionID != cmp.SubscriptionID {
-		return false
-	}
-	if v.ResourceGroupName != cmp.ResourceGroupName {
-		return false
-	}
-	if v.VNetName != cmp.VNetName {
-		return false
-	}
-	return true
+	_ = "STUB: not implemented"
+	return false
 }
 
 // GetSubnetResourceID constructs the subnet resource id
 func GetSubnetResourceID(subscriptionID, resourceGroupName, virtualNetworkName, subnetName string) string {
+	_ = "STUB: not implemented"
 	// an example subnet resource: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}
-	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s/subnets/%s", subscriptionID, resourceGroupName, virtualNetworkName, subnetName)
+	return ""
 }
 
 // GetVnetSubnetIDComponents parses an Azure subnet resource ID into its component parts.
@@ -62,22 +50,8 @@ func GetSubnetResourceID(subscriptionID, resourceGroupName, virtualNetworkName, 
 //
 // Returns an error if the input format is invalid or doesn't match the expected structure.
 func GetVnetSubnetIDComponents(vnetSubnetID string) (VnetSubnetResource, error) {
-	parts := strings.Split(vnetSubnetID, "/")
-	if len(parts) != 11 {
-		return VnetSubnetResource{}, fmt.Errorf("invalid vnet subnet id: %s", vnetSubnetID)
-	}
-
-	vs := VnetSubnetResource{
-		SubscriptionID:    parts[2],
-		ResourceGroupName: parts[4],
-		VNetName:          parts[8],
-		SubnetName:        parts[10],
-	}
-
-	//this is a cheap way of ensure all the names match
-	mirror := GetSubnetResourceID(vs.SubscriptionID, vs.ResourceGroupName, vs.VNetName, vs.SubnetName)
-	if !strings.EqualFold(mirror, vnetSubnetID) {
-		return VnetSubnetResource{}, fmt.Errorf("invalid vnet subnet id: %s", vnetSubnetID)
-	}
-	return vs, nil
+	_ = "STUB: not implemented"
+	return *new(VnetSubnetResource), nil
 }
+
+//this is a cheap way of ensure all the names match

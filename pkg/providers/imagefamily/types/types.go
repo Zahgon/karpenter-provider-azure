@@ -18,7 +18,6 @@ package types
 
 import (
 	"context"
-	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	armcomputev5 "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v7"
@@ -41,18 +40,14 @@ type DefaultImageOutput struct {
 }
 
 func (d *DefaultImageOutput) PopulateImageTraitsFromID(imageID string) {
+	_ = "STUB: not implemented"
 	// We want to take a community image gallery image id or a shared image gallery id and populate the contents of DefaultImageOutput
-	imageIDParts := strings.Split(imageID, "/")
-	if imageIDParts[1] == "subscriptions" { // Shared Image Gallery
-		d.GalleryResourceGroup = imageIDParts[4]
-		d.GalleryName = imageIDParts[8]
-		d.ImageDefinition = imageIDParts[10]
-	}
-	if imageIDParts[1] == "CommunityGalleries" { // Community Image Gallery
-		d.PublicGalleryURL = imageIDParts[2]
-		d.ImageDefinition = imageIDParts[4]
-	}
+	return
 }
+
+// Shared Image Gallery
+
+// Community Image Gallery
 
 // CommunityGalleryImageVersionsAPI is used for listing community gallery image versions.
 type CommunityGalleryImageVersionsAPI interface {

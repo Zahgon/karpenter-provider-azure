@@ -38,16 +38,9 @@ package aksmachinepoller
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"net/http"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v9"
-	"github.com/Azure/karpenter-provider-azure/pkg/utils/machine"
-	"github.com/samber/lo"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type AKSMachineGetter interface {
@@ -109,26 +102,12 @@ type Options struct {
 }
 
 // DefaultOptions returns production poller configuration.
-func DefaultOptions() Options {
-	return Options{
-		PollInterval:  5 * time.Second,
-		RetryDelay:    1 * time.Second,
-		MaxRetryDelay: 30 * time.Second,
-		MaxRetries:    10,
-	}
-}
+func DefaultOptions() Options { _ = "STUB: not implemented"; return *new(Options) }
 
 // InstantOptions returns poller configuration for tests where the fake
 // returns Succeeded immediately. Uses minimal intervals to avoid delays while
 // still exercising the polling code path.
-func InstantOptions() Options {
-	return Options{
-		PollInterval:  1 * time.Millisecond,
-		RetryDelay:    1 * time.Millisecond,
-		MaxRetryDelay: 1 * time.Millisecond,
-		MaxRetries:    3,
-	}
-}
+func InstantOptions() Options { _ = "STUB: not implemented"; return *new(Options) }
 
 // Poller polls AKS machine instances until they reach a terminal state.
 // This follows Azure SDK polling patterns with exponential backoff for transient errors.
@@ -149,14 +128,8 @@ func NewPoller(
 	aksMachinesPoolName string,
 	aksMachineName string,
 ) *Poller {
-	return &Poller{
-		config:              config,
-		client:              client,
-		resourceGroupName:   resourceGroupName,
-		clusterName:         clusterName,
-		aksMachinesPoolName: aksMachinesPoolName,
-		aksMachineName:      aksMachineName,
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // PollUntilDone polls the AKS machine instance with GET calls until provisioning state is stabilized.
@@ -167,171 +140,71 @@ func NewPoller(
 //
 // ASSUMPTION: the AKS machine creation has already begun, and is visible from the API (using GET).
 func (p *Poller) PollUntilDone(ctx context.Context) (*armcontainerservice.ErrorDetail, error) {
-	var retryAttemptsLeft int
-	var currentRetryDelay time.Duration
-	p.resetRetryState(&retryAttemptsLeft, &currentRetryDelay)
-
-	ticker := time.NewTicker(p.config.PollInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return nil, fmt.Errorf("context canceled while polling for AKS machine %q", p.aksMachineName)
-
-		case <-ticker.C:
-			provisioningErr, pollerErr, done := p.pollOnce(ctx, &retryAttemptsLeft, &currentRetryDelay)
-			if done {
-				return provisioningErr, pollerErr
-			}
-		}
-	}
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 // pollOnce performs a single GET poll and returns (provisioningErr, pollerErr, done).
 func (p *Poller) pollOnce(ctx context.Context, retryAttemptsLeft *int, currentRetryDelay *time.Duration) (*armcontainerservice.ErrorDetail, error, bool) {
-	aksMachine, err := p.getAKSMachine(ctx)
-	if err != nil {
-		return p.handleGetError(ctx, err, retryAttemptsLeft, currentRetryDelay)
-	}
-
-	if aksMachine.Properties == nil || aksMachine.Properties.ProvisioningState == nil {
-		return p.handleNilProvisioningState(ctx, aksMachine, retryAttemptsLeft, currentRetryDelay)
-	}
-
-	errDetails, pollerErr, done := machine.HandleProvisioningState(ctx, aksMachine)
-	if done {
-		return errDetails, pollerErr, true
-	}
-
-	if errDetails == nil && pollerErr == nil {
-		p.resetRetryState(retryAttemptsLeft, currentRetryDelay)
-		return nil, nil, false
-	}
-
-	shouldRetry, backoffErr := p.retryWithBackoff(ctx, retryAttemptsLeft, currentRetryDelay)
-	if backoffErr != nil {
-		return nil, backoffErr, true
-	}
-	if shouldRetry {
-		return nil, nil, false
-	}
-
-	return errDetails, pollerErr, true
+	_ = "STUB: not implemented"
+	return nil, nil, false
 }
 
 // handleGetError processes errors from the GET call during polling.
 func (p *Poller) handleGetError(ctx context.Context, err error, retryAttemptsLeft *int, currentRetryDelay *time.Duration) (*armcontainerservice.ErrorDetail, error, bool) {
-	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-		return nil, fmt.Errorf("failed to get AKS machine %q during polling as context is canceled: %w", p.aksMachineName, err), true
-	}
-
-	if !isTransientError(err) {
-		// Non-transient error (not found, auth, permissions, etc.) - fail immediately
-		// Not found is possible if the AKS machine is deleted mid-way.
-		// If the deletion takes time, it might appear with provisioning state "Deleting" before this can be reached.
-		return nil, fmt.Errorf("failed to get AKS machine %q during polling with non-retryable error: %w", p.aksMachineName, err), true
-	}
-
-	log.FromContext(ctx).V(2).Info("Poller: polling for AKS machine failed to get AKS machine, may retry",
-		"aksMachineName", p.aksMachineName,
-		"error", err,
-		"retryAttemptsLeft", *retryAttemptsLeft,
-		"retryDelay", *currentRetryDelay,
-	)
-
-	shouldRetry, backoffErr := p.retryWithBackoff(ctx, retryAttemptsLeft, currentRetryDelay)
-	if backoffErr != nil {
-		return nil, backoffErr, true
-	}
-	if shouldRetry {
-		return nil, nil, false
-	}
-	return nil, fmt.Errorf("failed to get AKS machine %q during polling: %w after exhausting %d retry attempts", p.aksMachineName, err, p.config.MaxRetries), true
+	_ = "STUB: not implemented"
+	return nil, nil, false
 }
+
+// Non-transient error (not found, auth, permissions, etc.) - fail immediately
+// Not found is possible if the AKS machine is deleted mid-way.
+// If the deletion takes time, it might appear with provisioning state "Deleting" before this can be reached.
 
 // handleNilProvisioningState handles the case where the machine's provisioning state is nil.
 func (p *Poller) handleNilProvisioningState(ctx context.Context, aksMachine *armcontainerservice.Machine, retryAttemptsLeft *int, currentRetryDelay *time.Duration) (*armcontainerservice.ErrorDetail, error, bool) {
-	log.FromContext(ctx).V(1).Info("Poller: warning: polling for AKS machine found nil provisioning state, may retry",
-		"aksMachineName", p.aksMachineName,
-		"aksMachineID", aksMachine.ID,
-		"provisioningState", nil,
-		"retryAttemptsLeft", *retryAttemptsLeft,
-		"retryDelay", *currentRetryDelay,
-	)
-
-	shouldRetry, backoffErr := p.retryWithBackoff(ctx, retryAttemptsLeft, currentRetryDelay)
-	if backoffErr != nil {
-		return nil, backoffErr, true
-	}
-	if shouldRetry {
-		return nil, nil, false
-	}
-	return nil, fmt.Errorf("AKS machine %q sees nil provisioning state after exhausting %d retry attempts", p.aksMachineName, p.config.MaxRetries), true
+	_ = "STUB: not implemented"
+	return nil, nil, false
 }
 
 // isTransientError determines if an error is retryable based on Azure SDK retry policy.
 // Matches Azure SDK RetryOptions.StatusCodes default behavior for GET operations.
-func isTransientError(err error) bool {
-	if err == nil {
-		return false
-	}
+func isTransientError(err error) bool { _ = "STUB: not implemented"; return false }
 
-	// Check for Azure ResponseError with retryable status codes
-	// Based on Azure SDK policy.RetryOptions default StatusCodes:
-	// 408 (RequestTimeout), 429 (TooManyRequests), 500 (InternalServerError),
-	// 502 (BadGateway), 503 (ServiceUnavailable), 504 (GatewayTimeout)
-	var respErr *azcore.ResponseError
-	if errors.As(err, &respErr) {
-		switch respErr.StatusCode {
-		case http.StatusRequestTimeout, // 408
-			http.StatusTooManyRequests,     // 429
-			http.StatusInternalServerError, // 500
-			http.StatusBadGateway,          // 502
-			http.StatusServiceUnavailable,  // 503
-			http.StatusGatewayTimeout:      // 504
-			return true
-		default:
-			// Non-retryable status codes (e.g., 401 Unauthorized, 403 Forbidden, 404 Not Found)
-			return false
-		}
-	}
+// Check for Azure ResponseError with retryable status codes
+// Based on Azure SDK policy.RetryOptions default StatusCodes:
+// 408 (RequestTimeout), 429 (TooManyRequests), 500 (InternalServerError),
+// 502 (BadGateway), 503 (ServiceUnavailable), 504 (GatewayTimeout)
 
-	// Network errors, timeouts, and other transient errors should be retried
-	// This catches things like temporary DNS failures, connection resets, etc.
-	return true
-}
+// 408
+// 429
+// 500
+// 502
+// 503
+// 504
+
+// Non-retryable status codes (e.g., 401 Unauthorized, 403 Forbidden, 404 Not Found)
+
+// Network errors, timeouts, and other transient errors should be retried
+// This catches things like temporary DNS failures, connection resets, etc.
 
 func (p *Poller) getAKSMachine(ctx context.Context) (*armcontainerservice.Machine, error) {
-	resp, err := p.client.Get(ctx, p.resourceGroupName, p.clusterName, p.aksMachinesPoolName, p.aksMachineName, nil)
-	if err != nil {
-		return nil, err
-	}
-	return lo.ToPtr(resp.Machine), nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 // retryWithBackoff applies exponential backoff and returns true if retry should continue, false if exhausted.
 // It decrements retryAttemptsLeft, sleeps with exponential backoff, and updates currentRetryDelay.
 func (p *Poller) retryWithBackoff(ctx context.Context, retryAttemptsLeft *int, currentRetryDelay *time.Duration) (shouldRetry bool, err error) {
-	if *retryAttemptsLeft <= 0 {
-		return false, nil
-	}
-
-	*retryAttemptsLeft--
-
-	// Apply exponential backoff before next retry
-	select {
-	case <-time.After(*currentRetryDelay):
-		// Exponentially increase delay, capped at maxRetryDelay
-		*currentRetryDelay = min(*currentRetryDelay*2, p.config.MaxRetryDelay)
-		return true, nil
-	case <-ctx.Done():
-		return false, ctx.Err()
-	}
+	_ = "STUB: not implemented"
+	return false, nil
 }
+
+// Apply exponential backoff before next retry
+
+// Exponentially increase delay, capped at maxRetryDelay
 
 // resetRetryState returns the initial retry state values.
 func (p *Poller) resetRetryState(retryAttemptsLeft *int, currentRetryDelay *time.Duration) {
-	*retryAttemptsLeft = p.config.MaxRetries
-	*currentRetryDelay = p.config.RetryDelay
+	_ = "STUB: not implemented"
+	return
 }

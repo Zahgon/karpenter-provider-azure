@@ -18,15 +18,11 @@ package loadbalancer
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	"github.com/patrickmn/go-cache"
-	"github.com/samber/lo"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -70,117 +66,59 @@ type BackendAddressPools struct {
 
 // NewProvider creates a new LoadBalancer provider
 func NewProvider(loadBalancersAPI LoadBalancersAPI, cache *cache.Cache, resourceGroup string) *Provider {
-	return &Provider{
-		loadBalancersAPI: loadBalancersAPI,
-		cache:            cache,
-		resourceGroup:    resourceGroup,
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // LoadBalancerBackendPools returns a collection of IPv4 and IPv6 LoadBalancer backend pools.
 // This collection is collected from Azure periodically but usually served from a cache to reduce
 // Azure request load.
 func (p *Provider) LoadBalancerBackendPools(ctx context.Context) (*BackendAddressPools, error) {
-	loadBalancers, err := p.getLoadBalancers(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	backendAddressPools := lo.FlatMap(loadBalancers, extractBackendAddressPools)
-	ipv4PoolIDs := lo.FilterMap(backendAddressPools, func(backendPool *armnetwork.BackendAddressPool, idx int) (string, bool) {
-		if !isBackendAddressPoolApplicable(backendPool, idx) {
-			return "", false
-		}
-
-		return lo.FromPtr(backendPool.ID), true
-	})
-
-	log.FromContext(ctx).V(1).Info("returning IPv4 backend pools", "ipv4PoolCount", len(ipv4PoolIDs), "ipv4PoolIDs", ipv4PoolIDs)
-
-	// RP only actually assigns the LB backend pools to VMs if OutboundType is LoadBalancer,
-	// but that's also the only OutboundType which creates the LoadBalancer, so as long as we're not allowing
-	// OutboundType changes, we can just infer that if the LBs exist we should assign them.
-	return &BackendAddressPools{
-		IPv4PoolIDs: ipv4PoolIDs,
-		// TODO: IPv6 deferred for now. When they're used they must be put onto a non-primary NIC.
-	}, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
+
+// RP only actually assigns the LB backend pools to VMs if OutboundType is LoadBalancer,
+// but that's also the only OutboundType which creates the LoadBalancer, so as long as we're not allowing
+// OutboundType changes, we can just infer that if the LBs exist we should assign them.
+
+// TODO: IPv6 deferred for now. When they're used they must be put onto a non-primary NIC.
 
 func (p *Provider) getLoadBalancers(ctx context.Context) ([]*armnetwork.LoadBalancer, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	if cached, ok := p.cache.Get(loadBalancersCacheKey); ok {
-		return cached.([]*armnetwork.LoadBalancer), nil
-	}
-
-	lbs, err := p.loadFromAzure(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// If we wanted to hyper-optimize, we could set a much longer timeout once we find the -internal LB, as at that point we're "done" and
-	// aren't particularly interested in LB changes anymore.
-	p.cache.SetDefault(loadBalancersCacheKey, lbs)
-
-	return lbs, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
+
+// If we wanted to hyper-optimize, we could set a much longer timeout once we find the -internal LB, as at that point we're "done" and
+// aren't particularly interested in LB changes anymore.
 
 func (p *Provider) loadFromAzure(ctx context.Context) ([]*armnetwork.LoadBalancer, error) {
-	log.FromContext(ctx).Info("querying load balancers in resource group", "resourceGroup", p.resourceGroup)
-
-	pager := p.loadBalancersAPI.NewListPager(p.resourceGroup, nil)
-
-	var lbs []*armnetwork.LoadBalancer
-	for pager.More() {
-		page, err := pager.NextPage(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get next loadbalancer page: %w", err)
-		}
-		lbs = append(lbs, page.Value...)
-	}
-
-	// Only return the LBs we actually care about
-	result := lo.Filter(lbs, isClusterLoadBalancer)
-	log.FromContext(ctx).Info("found load balancers of interest", "loadBalancerCount", len(result))
-	return result, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
+
+// Only return the LBs we actually care about
 
 func isClusterLoadBalancer(lb *armnetwork.LoadBalancer, _ int) bool {
-	name := lo.FromPtr(lb.Name)
-	return strings.EqualFold(name, SLBName) || strings.EqualFold(name, InternalSLBName) // TODO: Not currently supporting IPv6
+	_ = "STUB: not implemented"
+	return false
 }
 
-func extractBackendAddressPools(lb *armnetwork.LoadBalancer, _ int) []*armnetwork.BackendAddressPool {
-	if lb.Properties == nil {
-		return nil
-	}
+// TODO: Not currently supporting IPv6
 
-	return lb.Properties.BackendAddressPools
+func extractBackendAddressPools(lb *armnetwork.LoadBalancer, _ int) []*armnetwork.BackendAddressPool {
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func isBackendAddressPoolApplicable(backendPool *armnetwork.BackendAddressPool, _ int) bool {
-	if backendPool.Properties == nil || backendPool.Name == nil {
-		return false // shouldn't ever happen
-	}
-
-	name := *backendPool.Name
-	// Ignore well-known named ipv6 pools for now
-	if strings.EqualFold(name, SLBOutboundBackendPoolNameIPv6) || strings.EqualFold(name, SLBInboundBackendPoolNameIPv6) {
-		return false
-	}
-
-	// Ignore IP-based pools, which are a thing in NodeIP mode. We don't need to assign these pools.
-	// See isIPBasedBackendPool in RP.
-	for _, backendAddress := range backendPool.Properties.LoadBalancerBackendAddresses {
-		if backendAddress.Properties == nil || backendAddress.Properties.IPAddress == nil {
-			continue
-		}
-
-		if *backendAddress.Properties.IPAddress != "" {
-			return false
-		}
-	}
-
-	return true
+	_ = "STUB: not implemented"
+	return false
 }
+
+// shouldn't ever happen
+
+// Ignore well-known named ipv6 pools for now
+
+// Ignore IP-based pools, which are a thing in NodeIP mode. We don't need to assign these pools.
+// See isIPBasedBackendPool in RP.

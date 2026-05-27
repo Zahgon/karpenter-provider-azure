@@ -17,23 +17,11 @@ limitations under the License.
 package utils
 
 import (
-	"fmt"
-	"io"
-
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 )
 
 // ReadResponseBody reads the body from a ResponseError's RawResponse.
 func ReadResponseBody(respErr *azcore.ResponseError) ([]byte, error) {
-	if respErr.RawResponse == nil || respErr.RawResponse.Body == nil {
-		return nil, fmt.Errorf("no response body")
-	}
-	body, err := io.ReadAll(respErr.RawResponse.Body)
-	if err != nil {
-		return nil, err
-	}
-	if len(body) == 0 {
-		return nil, fmt.Errorf("empty response body")
-	}
-	return body, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }

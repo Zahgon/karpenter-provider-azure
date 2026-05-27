@@ -18,24 +18,15 @@ package launchtemplate
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v7"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/imagefamily"
-	karplabels "github.com/Azure/karpenter-provider-azure/pkg/providers/labels"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/launchtemplate/parameters"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/networksecuritygroup"
-	"github.com/Azure/karpenter-provider-azure/pkg/utils"
-	"github.com/samber/lo"
-	v1 "k8s.io/api/core/v1"
 
 	"github.com/Azure/karpenter-provider-azure/pkg/apis/v1beta1"
-	"github.com/Azure/karpenter-provider-azure/pkg/consts"
-	"github.com/Azure/karpenter-provider-azure/pkg/operator/options"
 	karpv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 	"sigs.k8s.io/karpenter/pkg/cloudprovider"
-
-	"sigs.k8s.io/karpenter/pkg/scheduling"
 )
 
 // ATTENTION!!!: changes here may NOT be effective on AKS machine nodes (ProvisionModeAKSMachineAPI); See aksmachineinstance.go/aksmachineinstancehelpers.go.
@@ -88,20 +79,8 @@ func NewProvider(
 	location,
 	provisionMode string,
 ) *Provider {
-	return &Provider{
-		imageFamily:             imageFamily,
-		imageProvider:           imageProvider,
-		nsgProvider:             nsgProvider,
-		caBundle:                caBundle,
-		clusterEndpoint:         clusterEndpoint,
-		tenantID:                tenantID,
-		subscriptionID:          subscriptionID,
-		kubeletIdentityClientID: kubeletIdentityClientID,
-		resourceGroup:           resourceGroup,
-		clusterResourceGroup:    clusterResourceGroup,
-		location:                location,
-		provisionMode:           provisionMode,
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // ATTENTION!!!: changes here may NOT be effective on AKS machine nodes (ProvisionModeAKSMachineAPI); See aksmachineinstance.go/aksmachineinstancehelpers.go.
@@ -113,30 +92,11 @@ func (p *Provider) GetTemplate(
 	instanceType *cloudprovider.InstanceType,
 	additionalLabels map[string]string,
 ) (*Template, error) {
-	staticParameters, err := p.getStaticParameters(ctx, instanceType, nodeClass, lo.Assign(nodeClaim.Labels, additionalLabels))
-	if err != nil {
-		return nil, err
-	}
-
-	kubernetesVersion, err := nodeClass.GetKubernetesVersion()
-	if err != nil {
-		// Note: we check GetKubernetesVersion for errors at the start of the Create call, so this case should not happen.
-		return nil, err
-	}
-	staticParameters.KubernetesVersion = kubernetesVersion
-	templateParameters, err := p.imageFamily.Resolve(ctx, nodeClass, nodeClaim, instanceType, staticParameters)
-	if err != nil {
-		return nil, err
-	}
-	launchTemplate, err := p.createLaunchTemplate(ctx, templateParameters)
-	if err != nil {
-		return nil, err
-	}
-
-	launchTemplate.Tags = Tags(options.FromContext(ctx), nodeClass, nodeClaim)
-
-	return launchTemplate, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
+
+// Note: we check GetKubernetesVersion for errors at the start of the Create call, so this case should not happen.
 
 // ATTENTION!!!: changes here may NOT be effective on AKS machine nodes (ProvisionModeAKSMachineAPI); See aksmachineinstance.go/aksmachineinstancehelpers.go.
 // Refactoring for code unification is not being invested immediately.
@@ -146,98 +106,22 @@ func (p *Provider) getStaticParameters(
 	nodeClass *v1beta1.AKSNodeClass,
 	labels map[string]string,
 ) (*parameters.StaticParameters, error) {
-	var arch = karpv1.ArchitectureAmd64
-	if err := instanceType.Requirements.Compatible(scheduling.NewRequirements(scheduling.NewRequirement(v1.LabelArchStable, v1.NodeSelectorOpIn, karpv1.ArchitectureArm64))); err == nil {
-		arch = karpv1.ArchitectureArm64
-	}
-
-	subnetID := lo.Ternary(nodeClass.Spec.VNETSubnetID != nil, lo.FromPtr(nodeClass.Spec.VNETSubnetID), options.FromContext(ctx).SubnetID)
-	baseLabels, err := karplabels.Get(ctx, nodeClass, arch)
-	if err != nil {
-		return nil, err
-	}
-	labels = lo.Assign(baseLabels, labels)
-
-	// Remove labels kubelet can't set (e.g. kubernetes.io/*, k8s.io/* outside allowed namespaces)
-	labels = lo.OmitBy(labels, func(key string, _ string) bool {
-		return !karplabels.CanKubeletSetLabel(key)
-	})
-
-	// ATTENTION!!!: changes here will NOT be effective on AKS machine nodes (ProvisionModeAKSMachineAPI); See aksmachineinstance.go/aksmachineinstancehelpers.go.
-	// Refactoring for code unification is not being invested immediately.
-
-	nsg, err := p.nsgProvider.ManagedNetworkSecurityGroup(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("getting managed network security group: %w", err)
-	}
-	nsgName := lo.FromPtr(nsg.Name)
-	clusterID := networksecuritygroup.GetClusterIDFromNSGName(nsgName)
-	routeTableName := fmt.Sprintf("aks-agentpool-%s-routetable", clusterID)
-
-	return &parameters.StaticParameters{
-		ClusterName:                    options.FromContext(ctx).ClusterName,
-		ClusterEndpoint:                p.clusterEndpoint,
-		Labels:                         labels,
-		CABundle:                       p.caBundle,
-		Arch:                           arch,
-		GPUNode:                        utils.IsNvidiaEnabledSKU(instanceType.Name),
-		GPUDriverVersion:               utils.GetGPUDriverVersion(instanceType.Name),
-		GPUDriverType:                  utils.GetGPUDriverType(instanceType.Name),
-		GPUImageSHA:                    utils.GetAKSGPUImageSHA(instanceType.Name),
-		GPUDriverInstallationEnabled:   nodeClass.IsGPUDriverInstallationEnabled(),
-		TenantID:                       p.tenantID,
-		SubscriptionID:                 p.subscriptionID,
-		KubeletIdentityClientID:        p.kubeletIdentityClientID,
-		ResourceGroup:                  p.resourceGroup,
-		Location:                       p.location,
-		NetworkSecurityGroupName:       nsgName,
-		RouteTableName:                 routeTableName,
-		APIServerName:                  options.FromContext(ctx).GetAPIServerName(),
-		KubeletClientTLSBootstrapToken: options.FromContext(ctx).KubeletClientTLSBootstrapToken,
-		NetworkPlugin:                  getAgentbakerNetworkPlugin(ctx),
-		NetworkPolicy:                  options.FromContext(ctx).NetworkPolicy,
-		SubnetID:                       subnetID,
-		ClusterResourceGroup:           p.clusterResourceGroup,
-	}, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
-func getAgentbakerNetworkPlugin(ctx context.Context) string {
-	opts := options.FromContext(ctx)
-	if opts.IsAzureCNIOverlay() || opts.IsCiliumNodeSubnet() || opts.IsNetworkPluginNone() {
-		return consts.NetworkPluginNone
-	}
-	return consts.NetworkPluginAzure
-}
+// Remove labels kubelet can't set (e.g. kubernetes.io/*, k8s.io/* outside allowed namespaces)
+
+// ATTENTION!!!: changes here will NOT be effective on AKS machine nodes (ProvisionModeAKSMachineAPI); See aksmachineinstance.go/aksmachineinstancehelpers.go.
+// Refactoring for code unification is not being invested immediately.
+
+func getAgentbakerNetworkPlugin(ctx context.Context) string { _ = "STUB: not implemented"; return "" }
 
 // ATTENTION!!!: changes here may NOT be effective on AKS machine nodes (ProvisionModeAKSMachineAPI); See aksmachineinstance.go/aksmachineinstancehelpers.go.
 // Refactoring for code unification is not being invested immediately.
 func (p *Provider) createLaunchTemplate(ctx context.Context, params *parameters.Parameters) (*Template, error) {
-	template := &Template{
-		ImageID:                   params.ImageID,
-		SubnetID:                  params.SubnetID,
-		IsWindows:                 params.IsWindows,
-		StorageProfileDiskType:    params.StorageProfileDiskType,
-		StorageProfileIsEphemeral: params.StorageProfileIsEphemeral,
-		StorageProfilePlacement:   params.StorageProfilePlacement,
-		StorageProfileSizeGB:      params.StorageProfileSizeGB,
-	}
-
-	switch p.provisionMode {
-	case consts.ProvisionModeBootstrappingClient:
-		customData, cse, err := params.CustomScriptsNodeBootstrapping.GetCustomDataAndCSE(ctx)
-		if err != nil {
-			return nil, err
-		}
-		template.CustomScriptsCustomData = customData
-		template.CustomScriptsCSE = cse
-	case consts.ProvisionModeAKSScriptless:
-		// render user data
-		userData, err := params.ScriptlessCustomData.Script()
-		if err != nil {
-			return nil, err
-		}
-		template.ScriptlessCustomData = userData
-	}
-
-	return template, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
+
+// render user data

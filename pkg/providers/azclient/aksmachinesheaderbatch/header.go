@@ -17,9 +17,6 @@ limitations under the License.
 package aksmachinesheaderbatch
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/instance/offerings"
 	"github.com/Azure/karpenter-provider-azure/pkg/utils/batcher"
 )
@@ -39,56 +36,12 @@ type MachineEntry struct {
 
 // buildBatchHeader creates the JSON for the BatchPutMachine HTTP header
 func buildBatchHeader(batch *batcher.Batch[aksMachineCreatePayload, *offerings.HandlableError]) (string, []MachineEntry, error) {
-	entries := make([]MachineEntry, 0, len(batch.Requests))
-	for _, req := range batch.Requests {
-		var tags map[string]string
-		if req.Payload.machineBody.Properties != nil {
-			tags = extractTags(req.Payload.machineBody.Properties.Tags)
-		} else {
-			tags = make(map[string]string)
-		}
-		entries = append(entries, MachineEntry{
-			MachineName: req.Payload.machineName,
-			Zones:       extractZones(req.Payload.machineBody.Zones),
-			Tags:        tags,
-		})
-	}
-
-	header := batchPutMachineHeader{
-		BatchMachines: entries,
-	}
-
-	jsonBytes, err := json.Marshal(header)
-	if err != nil {
-		return "", nil, fmt.Errorf("failed to marshal batch header: %w", err)
-	}
-	return string(jsonBytes), entries, nil
+	_ = "STUB: not implemented"
+	return "", nil, nil
 }
 
 // Helpers to convert Azure SDK pointer types to concrete values.
 
-func extractZones(zones []*string) []string {
-	if len(zones) == 0 {
-		return []string{}
-	}
-	result := make([]string, 0, len(zones))
-	for _, z := range zones {
-		if z != nil {
-			result = append(result, *z)
-		}
-	}
-	return result
-}
+func extractZones(zones []*string) []string { _ = "STUB: not implemented"; return nil }
 
-func extractTags(tags map[string]*string) map[string]string {
-	if tags == nil {
-		return make(map[string]string)
-	}
-	result := make(map[string]string, len(tags))
-	for k, v := range tags {
-		if v != nil {
-			result[k] = *v
-		}
-	}
-	return result
-}
+func extractTags(tags map[string]*string) map[string]string { _ = "STUB: not implemented"; return nil }

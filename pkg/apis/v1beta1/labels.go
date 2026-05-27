@@ -17,8 +17,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"strings"
-
 	"k8s.io/apimachinery/pkg/util/sets"
 	karpv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 	"sigs.k8s.io/karpenter/pkg/scheduling"
@@ -205,16 +203,8 @@ var imageFamilyToOSSKU = map[string]string{
 // GetOSSKUFromImageFamily returns the kuberentes.azure.com/os-sku label value for the given imageFamily.
 // If imageFamily is empty, it defaults to Ubuntu.
 // If the imageFamily is not recognized, it returns the imageFamily as-is.
-func GetOSSKUFromImageFamily(imageFamily string) string {
-	if imageFamily == "" {
-		imageFamily = UbuntuImageFamily
-	}
-	if osSKU, ok := imageFamilyToOSSKU[imageFamily]; ok {
-		return osSKU
-	}
-	return imageFamily // fallback for unknown image families
-}
+func GetOSSKUFromImageFamily(imageFamily string) string { _ = "STUB: not implemented"; return "" }
 
-func IsAKSLabel(label string) bool {
-	return strings.HasPrefix(label, AKSLabelDomain+"/") || aksLegacyLabels.Has(label)
-}
+// fallback for unknown image families
+
+func IsAKSLabel(label string) bool { _ = "STUB: not implemented"; return false }

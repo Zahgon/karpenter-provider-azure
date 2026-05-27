@@ -21,7 +21,6 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v7"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/azclient/azapi"
-	"github.com/samber/lo"
 )
 
 type DiskEncryptionSetsAPI struct {
@@ -41,18 +40,10 @@ func (d *DiskEncryptionSetsAPI) Get(
 	diskEncryptionSetName string,
 	options *armcompute.DiskEncryptionSetsClientGetOptions,
 ) (armcompute.DiskEncryptionSetsClientGetResponse, error) {
-	if d.GetFunc != nil {
-		return d.GetFunc(ctx, resourceGroupName, diskEncryptionSetName, options)
-	}
-	// Default: return success as if the DES exists and is accessible
-	return armcompute.DiskEncryptionSetsClientGetResponse{
-		DiskEncryptionSet: armcompute.DiskEncryptionSet{
-			Name:     lo.ToPtr(diskEncryptionSetName),
-			Location: lo.ToPtr("eastus"),
-		},
-	}, nil
+	_ = "STUB: not implemented"
+	return *new(armcompute.DiskEncryptionSetsClientGetResponse), nil
 }
 
-func (d *DiskEncryptionSetsAPI) Reset() {
-	d.GetFunc = nil
-}
+// Default: return success as if the DES exists and is accessible
+
+func (d *DiskEncryptionSetsAPI) Reset() { _ = "STUB: not implemented"; return }

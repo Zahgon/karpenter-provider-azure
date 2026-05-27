@@ -16,21 +16,6 @@ limitations under the License.
 
 package bootstrap
 
-import (
-	"bytes"
-	"encoding/base64"
-	"fmt"
-	"strings"
-
-	"github.com/blang/semver/v4"
-	"github.com/samber/lo"
-	v1 "k8s.io/api/core/v1"
-
-	"github.com/Azure/karpenter-provider-azure/pkg/utils"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
-
 type AKS struct {
 	Options
 
@@ -51,14 +36,7 @@ type AKS struct {
 
 var _ Bootstrapper = (*AKS)(nil) // assert AKS implements Bootstrapper
 
-func (a AKS) Script() (string, error) {
-	bootstrapScript, err := a.aksBootstrapScript()
-	if err != nil {
-		return "", fmt.Errorf("error getting AKS bootstrap script: %w", err)
-	}
-
-	return base64.StdEncoding.EncodeToString([]byte(bootstrapScript)), nil
-}
+func (a AKS) Script() (string, error) { _ = "STUB: not implemented"; return "", nil }
 
 // Config item types classified by code:
 //
@@ -223,229 +201,76 @@ type NodeBootstrapVariables struct {
 }
 
 func (a AKS) aksBootstrapScript() (string, error) {
+	_ = "STUB: not implemented"
 	// use these as the base / defaults
-	nbv := getStaticNodeBootstrapVars()
-
-	// apply overrides from passed in options
-	a.applyOptions(nbv)
-
-	containerdConfigTemplate, err := containerdConfigFromNodeBootstrapVars(nbv)
-	if err != nil {
-		return "", fmt.Errorf("error getting containerd config from node bootstrap variables: %w", err)
-	}
-
-	nbv.ContainerdConfigContent = base64.StdEncoding.EncodeToString([]byte(containerdConfigTemplate))
-	// generate script from template using the variables
-	customData, err := getCustomDataFromNodeBootstrapVars(nbv)
-	if err != nil {
-		return "", fmt.Errorf("error getting custom data from node bootstrap variables: %w", err)
-	}
-	return customData, nil
+	return "", nil
 }
+
+// apply overrides from passed in options
+
+// generate script from template using the variables
 
 // Download URL for KUBE_BINARY_URL publishes each k8s version in the URL.
-func kubeBinaryURL(kubernetesVersion, cpuArch string) string {
-	return fmt.Sprintf("%s/kubernetes/v%s/binaries/kubernetes-node-linux-%s.tar.gz", globalAKSMirror, kubernetesVersion, cpuArch)
-}
+func kubeBinaryURL(kubernetesVersion, cpuArch string) string { _ = "STUB: not implemented"; return "" }
 
 // CredentialProviderURL returns the URL for OOT credential provider,
 // or an empty string if OOT provider is not to be used
 func CredentialProviderURL(kubernetesVersion, arch string) string {
-	minorVersion := semver.MustParse(kubernetesVersion).Minor
-	if minorVersion < 30 { // use from 1.30; 1.29 supports it too, but we have not fully tested it with Karpenter
-		return ""
-	}
-
-	// credential provider has its own release outside of k8s version, and there'll be one credential provider binary for each k8s release,
-	// as credential provider release goes with cloud-provider-azure, not every credential provider release will be picked up unless
-	// there are CVE or bug fixes.
-	var credentialProviderVersion string
-	switch minorVersion {
-	case 29:
-		credentialProviderVersion = "1.29.15"
-	case 30:
-		credentialProviderVersion = "1.30.12"
-	case 31:
-		credentialProviderVersion = "1.31.6"
-	case 32:
-		credentialProviderVersion = "1.32.5"
-	case 33:
-		fallthrough // to default, which is same as latest
-	default:
-		credentialProviderVersion = "1.33.0"
-	}
-
-	return fmt.Sprintf("%s/cloud-provider-azure/v%s/binaries/azure-acr-credential-provider-linux-%s-v%s.tar.gz", globalAKSMirror, credentialProviderVersion, arch, credentialProviderVersion)
+	_ = "STUB: not implemented"
+	return ""
 }
 
-func (a AKS) applyOptions(nbv *NodeBootstrapVariables) {
-	nbv.KubeCACrt = *a.CABundle
-	nbv.APIServerName = a.APIServerName
-	nbv.TLSBootstrapToken = a.KubeletClientTLSBootstrapToken
+// use from 1.30; 1.29 supports it too, but we have not fully tested it with Karpenter
 
-	nbv.TenantID = a.TenantID
-	nbv.SubscriptionID = a.SubscriptionID
-	nbv.Location = a.Location
-	nbv.ResourceGroup = a.ResourceGroup
-	nbv.UserAssignedIdentityID = a.KubeletIdentityClientID
+// credential provider has its own release outside of k8s version, and there'll be one credential provider binary for each k8s release,
+// as credential provider release goes with cloud-provider-azure, not every credential provider release will be picked up unless
+// there are CVE or bug fixes.
 
-	nbv.NetworkPlugin = a.NetworkPlugin
+// to default, which is same as latest
 
-	nbv.NetworkPolicy = a.NetworkPolicy
-	nbv.KubernetesVersion = a.KubernetesVersion
+func (a AKS) applyOptions(nbv *NodeBootstrapVariables) { _ = "STUB: not implemented"; return }
 
-	nbv.KubeBinaryURL = kubeBinaryURL(a.KubernetesVersion, a.Arch)
-	nbv.VNETCNILinuxPluginsURL = fmt.Sprintf("%s/azure-cni/v1.4.32/binaries/azure-vnet-cni-linux-%s-v1.4.32.tgz", globalAKSMirror, a.Arch)
-	nbv.CNIPluginsURL = fmt.Sprintf("%s/cni-plugins/v1.1.1/binaries/cni-plugins-linux-%s-v1.1.1.tgz", globalAKSMirror, a.Arch)
-	// calculated values
-	nbv.NetworkSecurityGroup = a.NetworkSecurityGroupName
-	nbv.RouteTable = a.RouteTableName
+// calculated values
 
-	if a.GPUNode && a.GPUDriverInstallationEnabled {
-		nbv.GPUNode = true
-		nbv.ConfigGPUDriverIfNeeded = true
-		nbv.GPUDriverVersion = a.GPUDriverVersion
-		nbv.GPUDriverType = a.GPUDriverType
-		nbv.GPUImageSHA = a.GPUImageSHA
-	} else {
-		// For non-GPU nodes or GPU nodes with mode: None,
-		// GPUNode is set to false and ConfigGPUDriverIfNeeded is false.
-		// AgentBaker requires GPU_NODE=false to skip NVIDIA driver installation,
-		// fabric manager setup, and to use runc instead of nvidia-container-runtime.
-		// (which won't be installed without GPU driver setup).
-		nbv.ConfigGPUDriverIfNeeded = false
-	}
+// For non-GPU nodes or GPU nodes with mode: None,
+// GPUNode is set to false and ConfigGPUDriverIfNeeded is false.
+// AgentBaker requires GPU_NODE=false to skip NVIDIA driver installation,
+// fabric manager setup, and to use runc instead of nvidia-container-runtime.
+// (which won't be installed without GPU driver setup).
 
-	// merge and stringify labels
-	kubeletLabels := a.Labels
+// merge and stringify labels
 
-	subnetParts, _ := utils.GetVnetSubnetIDComponents(a.SubnetID)
-	nbv.Subnet = subnetParts.SubnetName
-	nbv.VirtualNetworkResourceGroup = subnetParts.ResourceGroupName
-	nbv.VirtualNetwork = subnetParts.VNetName
+// Assign Per K8s version kubelet flags
 
-	nbv.KubeletNodeLabels = strings.Join(lo.MapToSlice(kubeletLabels, func(k, v string) string {
-		return fmt.Sprintf("%s=%s", k, v)
-	}), ",")
+// use OOT credential provider
 
-	// Assign Per K8s version kubelet flags
-	minorVersion := semver.MustParse(a.KubernetesVersion).Minor
-	kubeletFlagsBase := getBaseKubeletFlags()
-	if minorVersion < 31 {
-		kubeletFlagsBase["--keep-terminated-pod-volumes"] = "false"
-	}
-	if minorVersion >= 34 {
-		delete(kubeletFlagsBase, "--cloud-config")
-	}
-	if minorVersion >= 35 {
-		delete(kubeletFlagsBase, "--pod-infra-container-image")
-	}
+// Versions Less than 1.30
+// we can make this logic smarter later when we have more than one
+// for now just adding here.
 
-	credentialProviderURL := CredentialProviderURL(a.KubernetesVersion, a.Arch)
-	if credentialProviderURL != "" { // use OOT credential provider
-		nbv.CredentialProviderDownloadURL = credentialProviderURL
-		kubeletFlagsBase["--image-credential-provider-config"] = "/var/lib/kubelet/credential-provider-config.yaml"
-		kubeletFlagsBase["--image-credential-provider-bin-dir"] = "/var/lib/kubelet/credential-provider"
-	} else { // Versions Less than 1.30
-		// we can make this logic smarter later when we have more than one
-		// for now just adding here.
-		kubeletFlagsBase["--feature-gates"] = "DisableKubeletCloudCredentialProviders=false"
-		kubeletFlagsBase["--azure-container-registry-config"] = "/etc/kubernetes/azure.json"
-	}
-	// merge and stringify taints
-	kubeletFlags := lo.Assign(kubeletFlagsBase)
-	if len(a.Taints) > 0 {
-		taintStrs := lo.Map(a.Taints, func(taint v1.Taint, _ int) string { return taint.ToString() })
-		kubeletFlags = lo.Assign(kubeletFlags, map[string]string{"--register-with-taints": strings.Join(taintStrs, ",")})
-	}
+// merge and stringify taints
 
-	nodeclaimKubeletConfig := kubeletConfigToMap(a.KubeletConfig)
-	kubeletFlags = lo.Assign(kubeletFlags, nodeclaimKubeletConfig)
-
-	// stringify kubelet flags (including taints)
-	nbv.KubeletFlags = strings.Join(lo.MapToSlice(kubeletFlags, func(k, v string) string {
-		return fmt.Sprintf("%s=%s", k, v)
-	}), " ")
-}
+// stringify kubelet flags (including taints)
 
 func containerdConfigFromNodeBootstrapVars(nbv *NodeBootstrapVariables) (string, error) {
-	var buffer bytes.Buffer
-	if err := getContainerdConfigTemplate().Execute(&buffer, *nbv); err != nil {
-		return "", fmt.Errorf("error executing containerd config template: %w", err)
-	}
-	return buffer.String(), nil
+	_ = "STUB: not implemented"
+	return "", nil
 }
 
 func getCustomDataFromNodeBootstrapVars(nbv *NodeBootstrapVariables) (string, error) {
-	var buffer bytes.Buffer
-	if err := getCustomDataTemplate().Execute(&buffer, *nbv); err != nil {
-		return "", fmt.Errorf("error executing custom data template: %w", err)
-	}
-	return buffer.String(), nil
+	_ = "STUB: not implemented"
+	return "", nil
 }
 
 //nolint:gocyclo
 func kubeletConfigToMap(kubeletConfig *KubeletConfiguration) map[string]string {
-	args := make(map[string]string)
-
-	if kubeletConfig == nil {
-		return args
-	}
-	args["--max-pods"] = fmt.Sprintf("%d", kubeletConfig.MaxPods)
-	JoinParameterArgsToMap(args, "--system-reserved", kubeletConfig.SystemReserved, "=")
-	JoinParameterArgsToMap(args, "--kube-reserved", kubeletConfig.KubeReserved, "=")
-	JoinParameterArgsToMap(args, "--eviction-hard", kubeletConfig.EvictionHard, "<")
-	JoinParameterArgsToMap(args, "--eviction-soft", kubeletConfig.EvictionSoft, "<")
-	JoinParameterArgsToMap(args, "--eviction-soft-grace-period", lo.MapValues(kubeletConfig.EvictionSoftGracePeriod, func(v metav1.Duration, _ string) string {
-		return v.Duration.String()
-	}), "=")
-
-	if kubeletConfig.EvictionMaxPodGracePeriod != nil {
-		args["--eviction-max-pod-grace-period"] = fmt.Sprintf("%d", lo.FromPtr(kubeletConfig.EvictionMaxPodGracePeriod))
-	}
-	if kubeletConfig.ImageGCHighThresholdPercent != nil {
-		args["--image-gc-high-threshold"] = fmt.Sprintf("%d", lo.FromPtr(kubeletConfig.ImageGCHighThresholdPercent))
-	}
-	if kubeletConfig.ImageGCLowThresholdPercent != nil {
-		args["--image-gc-low-threshold"] = fmt.Sprintf("%d", lo.FromPtr(kubeletConfig.ImageGCLowThresholdPercent))
-	}
-	if kubeletConfig.CPUCFSQuota != nil {
-		args["--cpu-cfs-quota"] = fmt.Sprintf("%t", lo.FromPtr(kubeletConfig.CPUCFSQuota))
-	}
-	if kubeletConfig.CPUManagerPolicy != nil && *kubeletConfig.CPUManagerPolicy != "" {
-		args["--cpu-manager-policy"] = *kubeletConfig.CPUManagerPolicy
-	}
-	if kubeletConfig.TopologyManagerPolicy != nil && *kubeletConfig.TopologyManagerPolicy != "" {
-		args["--topology-manager-policy"] = *kubeletConfig.TopologyManagerPolicy
-	}
-	if kubeletConfig.ContainerLogMaxSize != nil && *kubeletConfig.ContainerLogMaxSize != "" {
-		args["--container-log-max-size"] = *kubeletConfig.ContainerLogMaxSize
-	}
-	if kubeletConfig.ContainerLogMaxFiles != nil {
-		args["--container-log-max-files"] = fmt.Sprintf("%d", lo.FromPtr(kubeletConfig.ContainerLogMaxFiles))
-	}
-	if kubeletConfig.PodPidsLimit != nil {
-		args["--pod-max-pids"] = fmt.Sprintf("%d", lo.FromPtr(kubeletConfig.PodPidsLimit))
-	}
-	if len(kubeletConfig.AllowedUnsafeSysctls) > 0 {
-		args["--allowed-unsafe-sysctls"] = strings.Join(kubeletConfig.AllowedUnsafeSysctls, ",")
-	}
-	if kubeletConfig.ClusterDNSServiceIP != "" {
-		args["--cluster-dns"] = kubeletConfig.ClusterDNSServiceIP
-	}
-
-	return args
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // joinParameterArgsToMap joins a map of keys and values by their separator. The separator will sit between the
 // arguments in a comma-separated list i.e. arg1<sep>val1,arg2<sep>val2
 func JoinParameterArgsToMap[K comparable, V any](result map[string]string, name string, m map[K]V, separator string) {
-	var args []string
-
-	for k, v := range m {
-		args = append(args, fmt.Sprintf("%v%s%v", k, separator, v))
-	}
-	if len(args) > 0 {
-		result[name] = strings.Join(args, ",")
-	}
+	_ = "STUB: not implemented"
+	return
 }

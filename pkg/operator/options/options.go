@@ -18,22 +18,10 @@ package options
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
-	"flag"
-	"fmt"
-	"net/url"
-	"os"
-	"strings"
 
-	"k8s.io/apimachinery/pkg/util/sets"
-	k8sflag "k8s.io/component-base/cli/flag"
 	coreoptions "sigs.k8s.io/karpenter/pkg/operator/options"
-	"sigs.k8s.io/karpenter/pkg/utils/env"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/Azure/karpenter-provider-azure/pkg/consts"
-	"github.com/Azure/karpenter-provider-azure/pkg/utils"
 )
 
 func init() {
@@ -43,21 +31,15 @@ func init() {
 type nodeIdentitiesValue []string
 
 func newNodeIdentitiesValue(val string, p *[]string) *nodeIdentitiesValue {
-	*p = []string{}
-	if val != "" {
-		*p = strings.Split(val, ",")
-	}
-	return (*nodeIdentitiesValue)(p)
-}
-
-func (s *nodeIdentitiesValue) Set(val string) error {
-	*s = nodeIdentitiesValue(strings.Split(val, ","))
+	_ = "STUB: not implemented"
 	return nil
 }
 
-func (s *nodeIdentitiesValue) Get() any { return []string(*s) }
+func (s *nodeIdentitiesValue) Set(val string) error { _ = "STUB: not implemented"; return nil }
 
-func (s *nodeIdentitiesValue) String() string { return strings.Join(*s, ",") }
+func (s *nodeIdentitiesValue) Get() any { _ = "STUB: not implemented"; return *new(any) }
+
+func (s *nodeIdentitiesValue) String() string { _ = "STUB: not implemented"; return "" }
 
 type optionsKey struct{}
 
@@ -103,103 +85,35 @@ type Options struct {
 	ParsedDiskEncryptionSetID *arm.ResourceID `json:"-"`
 }
 
-func (o *Options) AddFlags(fs *coreoptions.FlagSet) {
-	fs.StringVar(&o.ClusterName, "cluster-name", env.WithDefaultString("CLUSTER_NAME", ""), "[REQUIRED] The kubernetes cluster name for resource tags.")
-	fs.StringVar(&o.ClusterEndpoint, "cluster-endpoint", env.WithDefaultString("CLUSTER_ENDPOINT", ""), "[REQUIRED] The external kubernetes cluster endpoint for new nodes to connect with.")
-	fs.Float64Var(&o.VMMemoryOverheadPercent, "vm-memory-overhead-percent", utils.WithDefaultFloat64("VM_MEMORY_OVERHEAD_PERCENT", 0.075), "The VM memory overhead as a percent that will be subtracted from the total memory for all instance types.")
-	fs.StringVar(&o.KubeletClientTLSBootstrapToken, "kubelet-bootstrap-token", env.WithDefaultString("KUBELET_BOOTSTRAP_TOKEN", ""), "[REQUIRED] The bootstrap token for new nodes to join the cluster.")
-	fs.StringVar(&o.LinuxAdminUsername, "linux-admin-username", env.WithDefaultString("LINUX_ADMIN_USERNAME", "azureuser"), "The admin username for Linux VMs.")
-	fs.StringVar(&o.SSHPublicKey, "ssh-public-key", env.WithDefaultString("SSH_PUBLIC_KEY", ""), "[REQUIRED] VM SSH public key.")
-	fs.StringVar(&o.NetworkPlugin, "network-plugin", env.WithDefaultString("NETWORK_PLUGIN", consts.NetworkPluginAzure), "The network plugin used by the cluster.")
-	fs.StringVar(&o.DNSServiceIP, "dns-service-ip", env.WithDefaultString("DNS_SERVICE_IP", ""), "The IP address of cluster DNS service.")
-	fs.StringVar(&o.NetworkPluginMode, "network-plugin-mode", env.WithDefaultString("NETWORK_PLUGIN_MODE", consts.NetworkPluginModeOverlay), "network plugin mode of the cluster.")
-	fs.StringVar(&o.NetworkPolicy, "network-policy", env.WithDefaultString("NETWORK_POLICY", ""), "The network policy used by the cluster.")
-	fs.StringVar(&o.NetworkDataplane, "network-dataplane", env.WithDefaultString("NETWORK_DATAPLANE", "cilium"), "The network dataplane used by the cluster.")
-	fs.StringVar(&o.VnetGUID, "vnet-guid", env.WithDefaultString("VNET_GUID", ""), "The vnet guid of the clusters vnet, only required by azure cni with overlay + byo vnet")
-	fs.StringVar(&o.SubnetID, "vnet-subnet-id", env.WithDefaultString("VNET_SUBNET_ID", ""), "[REQUIRED] The default subnet ID to use for new nodes. This must be a valid ARM resource ID for subnet that does not overlap with the service CIDR or the pod CIDR.")
-	fs.Var(newNodeIdentitiesValue(env.WithDefaultString("NODE_IDENTITIES", ""), &o.NodeIdentities), "node-identities", "User assigned identities for nodes.")
-	fs.StringVar(&o.ProvisionMode, "provision-mode", env.WithDefaultString("PROVISION_MODE", consts.ProvisionModeAKSScriptless), "[UNSUPPORTED] The provision mode for the cluster.")
-	fs.StringVar(&o.NodeBootstrappingServerURL, "nodebootstrapping-server-url", env.WithDefaultString("NODEBOOTSTRAPPING_SERVER_URL", ""), "[UNSUPPORTED] The url for the node bootstrapping provider server.")
-	fs.StringVar(&o.NodeResourceGroup, "node-resource-group", env.WithDefaultString("AZURE_NODE_RESOURCE_GROUP", ""), "[REQUIRED] the resource group created and managed by AKS where the nodes live")
-	fs.StringVar(&o.KubeletIdentityClientID, "kubelet-identity-client-id", env.WithDefaultString("KUBELET_IDENTITY_CLIENT_ID", ""), "The client ID of the kubelet identity.")
-	fs.BoolVar(&o.UseSIG, "use-sig", env.WithDefaultBool("USE_SIG", false), "If set to true karpenter will use the AKS managed shared image galleries and the node image versions api. If set to false karpenter will use community image galleries. Only a subset of image features will be available in the community image galleries and this flag is only for the managed node provisioning addon.")
-	fs.StringVar(&o.SIGAccessTokenServerURL, "sig-access-token-server-url", env.WithDefaultString("SIG_ACCESS_TOKEN_SERVER_URL", ""), "The URL for the SIG access token server. Only used for AKS managed karpenter. UseSIG must be set tot true for this to take effect.")
-	fs.StringVar(&o.SIGSubscriptionID, "sig-subscription-id", env.WithDefaultString("SIG_SUBSCRIPTION_ID", ""), "The subscription ID of the shared image gallery.")
-	fs.StringVar(&o.DiskEncryptionSetID, "node-osdisk-diskencryptionset-id", env.WithDefaultString("NODE_OSDISK_DISKENCRYPTIONSET_ID", ""), "The ARM resource ID of the disk encryption set to use for customer-managed key (BYOK) encryption.")
-	fs.BoolVar(&o.ManageExistingAKSMachines, "manage-existing-aks-machines", env.WithDefaultBool("MANAGE_EXISTING_AKS_MACHINES", false), "If set to true, existing AKS machines created with an AKS Machine API provision mode will be managed even with other provision modes. This option does not have any effect when already on an AKS Machine API mode.")
-	fs.StringVar(&o.AKSMachinesPoolName, "aks-machines-pool-name", env.WithDefaultString("AKS_MACHINES_POOL_NAME", ""), "The name of the agent pool that the AKS machines are/will be in with AKS machine API provision modes. Existing AKS machines outside of this pool will be ignored. Required when PROVISION_MODE is an AKS machine API mode.")
-	fs.IntVar(&o.BatchIdleTimeoutMS, "batch-idle-timeout-ms", env.WithDefaultInt("BATCH_IDLE_TIMEOUT_MS", 1000), "Idle timeout in milliseconds for batch accumulation. Only used on provision mode aksmachineapiheaderbatch.")
-	fs.IntVar(&o.BatchMaxTimeoutMS, "batch-max-timeout-ms", env.WithDefaultInt("BATCH_MAX_TIMEOUT_MS", 5000), "Maximum timeout in milliseconds for batch accumulation. Only used on provision mode aksmachineapiheaderbatch.")
-	fs.IntVar(&o.MaxBatchSize, "max-batch-size", env.WithDefaultInt("MAX_BATCH_SIZE", consts.AKSMachineAPIHeaderBatchMaxSize), fmt.Sprintf("Maximum number of machines per batch (AKS API limit is %d). Only used on provision mode aksmachineapiheaderbatch.", consts.AKSMachineAPIHeaderBatchMaxSize))
+func (o *Options) AddFlags(fs *coreoptions.FlagSet) { _ = "STUB: not implemented"; return }
 
-	additionalTagsFlag := k8sflag.NewMapStringString(&o.AdditionalTags)
-	if err := additionalTagsFlag.Set(env.WithDefaultString("ADDITIONAL_TAGS", "")); err != nil {
-		panic(fmt.Sprintf("failed to parse ADDITIONAL_TAGS from string %q: %s", env.WithDefaultString("ADDITIONAL_TAGS", ""), err))
-	}
-	// See https://github.com/Azure/karpenter-provider-azure/issues/1042 for issue discussing improvements around this
-	fs.Var(additionalTagsFlag, "additional-tags", "Additional tags to apply to the resources in Azure. Format is key1=value1,key2=value2. These tags will be merged with the tags specified on the NodePool. In the case of a tag collision, the NodePool tag wins. These tags only apply to new nodes and do not trigger drift, which means that adding tags to this collection will not update existing nodes until drift triggers for some other reason.")
-	fs.BoolVar(&o.EnableAzureSDKLogging, "enable-azure-sdk-logging", env.WithDefaultBool("ENABLE_AZURE_SDK_LOGGING", true), "If set to false then Azure SDK middleware logging is disabled for debugging, and won't be logging all HTTP requests/responses to Azure APIs.")
-}
+// See https://github.com/Azure/karpenter-provider-azure/issues/1042 for issue discussing improvements around this
 
 // IsAKSMachineAPIMode returns true if the current provision mode creates instances via the AKS Machine API.
-func (o *Options) IsAKSMachineAPIMode() bool {
-	return o.ProvisionMode == consts.ProvisionModeAKSMachineAPI || o.ProvisionMode == consts.ProvisionModeAKSMachineAPIHeaderBatch
-}
+func (o *Options) IsAKSMachineAPIMode() bool { _ = "STUB: not implemented"; return false }
 
-func (o *Options) GetAPIServerName() string {
-	endpoint, _ := url.Parse(o.ClusterEndpoint) // assume to already validated
-	return endpoint.Hostname()
-}
+func (o *Options) GetAPIServerName() string { _ = "STUB: not implemented"; return "" }
+
+// assume to already validated
 
 func (o *Options) Parse(fs *coreoptions.FlagSet, args ...string) error {
-	if err := fs.Parse(args); err != nil {
-		if errors.Is(err, flag.ErrHelp) {
-			os.Exit(0)
-		}
-		return fmt.Errorf("parsing flags, %w", err)
-	}
-
-	// Check if each option has been set. This is a little brute force and better options might exist,
-	// but this only needs to be here for one version
-	o.setFlags = map[string]bool{}
-	cliFlags := sets.New[string]()
-	fs.Visit(func(f *flag.Flag) {
-		cliFlags.Insert(f.Name)
-	})
-	fs.VisitAll(func(f *flag.Flag) {
-		envName := strings.ReplaceAll(strings.ToUpper(f.Name), "-", "_")
-		_, ok := os.LookupEnv(envName)
-		o.setFlags[f.Name] = ok || cliFlags.Has(f.Name)
-	})
-
-	if err := o.Validate(); err != nil {
-		return fmt.Errorf("validating options, %w", err)
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
-func (o *Options) String() string {
-	json, err := json.Marshal(o)
-	if err != nil {
-		return "couldn't marshal options JSON"
-	}
+// Check if each option has been set. This is a little brute force and better options might exist,
+// but this only needs to be here for one version
 
-	return string(json)
-}
+func (o *Options) String() string { _ = "STUB: not implemented"; return "" }
 
 func (o *Options) ToContext(ctx context.Context) context.Context {
-	return ToContext(ctx, o)
+	_ = "STUB: not implemented"
+	return *new(context.Context)
 }
 
 func ToContext(ctx context.Context, opts *Options) context.Context {
-	return context.WithValue(ctx, optionsKey{}, opts)
+	_ = "STUB: not implemented"
+	return *new(context.Context)
 }
 
-func FromContext(ctx context.Context) *Options {
-	retval := ctx.Value(optionsKey{})
-	if retval == nil {
-		return nil
-	}
-	return retval.(*Options)
-}
+func FromContext(ctx context.Context) *Options { _ = "STUB: not implemented"; return nil }

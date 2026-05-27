@@ -18,13 +18,7 @@ package fake
 
 import (
 	"context"
-	"fmt"
-	"maps"
-	"net/http"
 
-	"github.com/samber/lo"
-
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v7"
 	fakesync "github.com/Azure/karpenter-provider-azure/pkg/fake/sync"
@@ -62,11 +56,7 @@ type VirtualMachineExtensionsAPI struct {
 }
 
 // Reset must be called between tests otherwise tests will pollute each other.
-func (c *VirtualMachineExtensionsAPI) Reset() {
-	c.VirtualMachineExtensionsCreateOrUpdateBehavior.Reset()
-	c.VirtualMachineExtensionsUpdateBehavior.Reset()
-	c.Extensions.Clear()
-}
+func (c *VirtualMachineExtensionsAPI) Reset() { _ = "STUB: not implemented"; return }
 
 func (c *VirtualMachineExtensionsAPI) BeginCreateOrUpdate(
 	_ context.Context,
@@ -76,23 +66,11 @@ func (c *VirtualMachineExtensionsAPI) BeginCreateOrUpdate(
 	extension armcompute.VirtualMachineExtension,
 	options *armcompute.VirtualMachineExtensionsClientBeginCreateOrUpdateOptions,
 ) (*runtime.Poller[armcompute.VirtualMachineExtensionsClientCreateOrUpdateResponse], error) {
-	input := &VirtualMachineExtensionCreateOrUpdateInput{
-		ResourceGroupName:           resourceGroupName,
-		VirtualMachineName:          vmName,
-		VirtualMachineExtensionName: extensionName,
-		VirtualMachineExtension:     extension,
-		Options:                     options,
-	}
-
-	return c.VirtualMachineExtensionsCreateOrUpdateBehavior.Invoke(input, func(input *VirtualMachineExtensionCreateOrUpdateInput) (*armcompute.VirtualMachineExtensionsClientCreateOrUpdateResponse, error) {
-		result := input.VirtualMachineExtension
-		result.ID = lo.ToPtr(MakeVMExtensionID(input.ResourceGroupName, input.VirtualMachineName, input.VirtualMachineExtensionName))
-		c.Extensions.Store(input.VirtualMachineExtensionName, result) // only store latest, but could be improved
-		return &armcompute.VirtualMachineExtensionsClientCreateOrUpdateResponse{
-			VirtualMachineExtension: result,
-		}, nil
-	})
+	_ = "STUB: not implemented"
+	return nil, nil
 }
+
+// only store latest, but could be improved
 
 func (c *VirtualMachineExtensionsAPI) BeginUpdate(
 	_ context.Context,
@@ -102,36 +80,13 @@ func (c *VirtualMachineExtensionsAPI) BeginUpdate(
 	updates armcompute.VirtualMachineExtensionUpdate,
 	options *armcompute.VirtualMachineExtensionsClientBeginUpdateOptions,
 ) (*runtime.Poller[armcompute.VirtualMachineExtensionsClientUpdateResponse], error) {
-	input := &VirtualMachineExtensionUpdateInput{
-		ResourceGroupName:             resourceGroupName,
-		VirtualMachineName:            vmName,
-		VirtualMachineExtensionName:   extensionName,
-		VirtualMachineExtensionUpdate: updates,
-		Options:                       options,
-	}
-
-	return c.VirtualMachineExtensionsUpdateBehavior.Invoke(input, func(input *VirtualMachineExtensionUpdateInput) (*armcompute.VirtualMachineExtensionsClientUpdateResponse, error) {
-		id := MakeVMExtensionID(input.ResourceGroupName, input.VirtualMachineName, input.VirtualMachineExtensionName)
-
-		instance, ok := c.Extensions.Load(id)
-		if !ok {
-			return nil, &azcore.ResponseError{StatusCode: http.StatusNotFound}
-		}
-		ext := instance
-
-		if updates.Tags != nil {
-			// VM tags are full-replace if they're specified
-			ext.Tags = maps.Clone(updates.Tags)
-		}
-
-		c.Extensions.Store(input.VirtualMachineExtensionName, ext)
-		return &armcompute.VirtualMachineExtensionsClientUpdateResponse{
-			VirtualMachineExtension: ext,
-		}, nil
-	})
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
+// VM tags are full-replace if they're specified
+
 func MakeVMExtensionID(resourceGroupName, vmName, extensionName string) string {
-	const idFormat = "/subscriptions/subscriptionID/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s/extensions/%s"
-	return fmt.Sprintf(idFormat, resourceGroupName, vmName, extensionName)
+	_ = "STUB: not implemented"
+	return ""
 }

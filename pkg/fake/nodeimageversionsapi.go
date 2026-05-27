@@ -20,7 +20,6 @@ import (
 	"context"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v9"
-	"github.com/Azure/karpenter-provider-azure/pkg/providers/imagefamily"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/imagefamily/types"
 	"github.com/samber/lo"
 )
@@ -379,22 +378,12 @@ var (
 	}
 )
 
-func (n *NodeImageVersionsAPI) Reset() {
-	n.OverrideNodeImageVersions = nil
-	n.Error = nil
-}
+func (n *NodeImageVersionsAPI) Reset() { _ = "STUB: not implemented"; return }
 
 func (n *NodeImageVersionsAPI) List(_ context.Context, _ string) ([]*armcontainerservice.NodeImageVersion, error) {
+	_ = "STUB: not implemented"
 	// Error takes precedence over other fake data
-	if n.Error != nil {
-		return nil, n.Error
-	}
-
-	// Use override data if provided, otherwise use default static data
-	dataToUse := nodeImageVersionsSnapshotData
-	if n.OverrideNodeImageVersions != nil {
-		dataToUse = n.OverrideNodeImageVersions
-	}
-
-	return imagefamily.FilteredNodeImages(dataToUse), nil
+	return nil, nil
 }
+
+// Use override data if provided, otherwise use default static data

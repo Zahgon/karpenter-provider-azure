@@ -18,32 +18,14 @@ package status
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"sort"
-	"strings"
-	"time"
 
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	"github.com/awslabs/operatorpkg/reasonable"
-	"github.com/mitchellh/hashstructure/v2"
-	"github.com/samber/lo"
 
 	"github.com/Azure/karpenter-provider-azure/pkg/apis/v1beta1"
-	"github.com/Azure/karpenter-provider-azure/pkg/operator/options"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/imagefamily"
-	"github.com/Azure/karpenter-provider-azure/pkg/utils"
 
-	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	v1 "sigs.k8s.io/karpenter/pkg/apis/v1"
 	"sigs.k8s.io/karpenter/pkg/utils/pretty"
 )
 
@@ -68,28 +50,17 @@ func NewNodeImageReconciler(
 	provider imagefamily.NodeImageProvider,
 	inClusterKubernetesInterface kubernetes.Interface,
 ) *NodeImageReconciler {
-	systemNamespace := strings.TrimSpace(os.Getenv("SYSTEM_NAMESPACE"))
-
-	return &NodeImageReconciler{
-		nodeImageProvider:            provider,
-		inClusterKubernetesInterface: inClusterKubernetesInterface,
-		systemNamespace:              systemNamespace,
-		cm:                           pretty.NewChangeMonitor(),
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func (r *NodeImageReconciler) Register(_ context.Context, m manager.Manager) error {
-	return controllerruntime.NewControllerManagedBy(m).
-		Named(nodeImageReconcilerName).
-		For(&v1beta1.AKSNodeClass{}).
-		WithOptions(controller.Options{
-			RateLimiter: reasonable.RateLimiter(),
-			// TODO: Document why this magic number used. If we want to consistently use it accoss reconcilers, refactor to a reused const.
-			// Comments thread discussing this: https://github.com/Azure/karpenter-provider-azure/pull/729#discussion_r2006629809
-			MaxConcurrentReconciles: 10,
-		}).
-		Complete(reconcile.AsReconciler(m.GetClient(), r))
+	_ = "STUB: not implemented"
+	return nil
 }
+
+// TODO: Document why this magic number used. If we want to consistently use it accoss reconcilers, refactor to a reused const.
+// Comments thread discussing this: https://github.com/Azure/karpenter-provider-azure/pull/729#discussion_r2006629809
 
 // The image version reconciler will detect reasons to bump the node image version as follows in order:
 //
@@ -110,80 +81,32 @@ func (r *NodeImageReconciler) Register(_ context.Context, m manager.Manager) err
 // store Requirements adds minor bloat, it also provides extra visibility into the avilaible images and how their
 // selection will work, which is seen as worth the tradeoff.
 func (r *NodeImageReconciler) Reconcile(ctx context.Context, nodeClass *v1beta1.AKSNodeClass) (reconcile.Result, error) {
-	ctx = log.IntoContext(ctx, log.FromContext(ctx).WithName(nodeImageReconcilerName))
-	logger := log.FromContext(ctx)
-
-	// validate FIPS + useSIG
-	fipsMode := nodeClass.Spec.FIPSMode
-	useSIG := options.FromContext(ctx).UseSIG
-	if lo.FromPtr(fipsMode) == v1beta1.FIPSModeFIPS && !useSIG {
-		nodeClass.Status.Images = nil
-		nodeClass.StatusConditions().SetFalse(v1beta1.ConditionTypeImagesReady, "SIGRequiredForFIPS", "FIPS images require UseSIG to be enabled, but UseSIG is false (note: UseSIG is only supported in AKS managed NAP)")
-		logger.Info("FIPS images require SIG", "error", fmt.Errorf("FIPS images require UseSIG to be enabled, but UseSIG is false (note: UseSIG is only supported in AKS managed NAP)"))
-		return reconcile.Result{}, nil
-	}
-
-	nodeImages, err := r.nodeImageProvider.List(ctx, nodeClass)
-	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("getting nodeimages, %w", err)
-	}
-	goalImages := lo.Map(nodeImages, func(nodeImage imagefamily.NodeImage, _ int) v1beta1.NodeImage {
-		reqs := lo.Map(nodeImage.Requirements.NodeSelectorRequirements(), func(item v1.NodeSelectorRequirementWithMinValues, _ int) corev1.NodeSelectorRequirement {
-			return corev1.NodeSelectorRequirement{Key: item.Key, Operator: item.Operator, Values: item.Values}
-		})
-
-		// sorted for consistency
-		sort.Slice(reqs, func(i, j int) bool {
-			if len(reqs[i].Key) != len(reqs[j].Key) {
-				return len(reqs[i].Key) < len(reqs[j].Key)
-			}
-			return reqs[i].Key < reqs[j].Key
-		})
-		return v1beta1.NodeImage{
-			ID:           nodeImage.ID,
-			Requirements: reqs,
-		}
-	})
-
-	// Scenario A: Check if we should do a full update to latest before processing any partial update
-	//
-	// Note: We want to handle cases 1-3 regardless of maintenance window state, since they are either
-	// for initialization, based off an underlying customer operation, or a different update we're
-	// dependant upon which would have already been preformed within its required maintenance Window.
-	shouldUpdate := imageVersionsUnready(nodeClass)
-	if !shouldUpdate {
-		// Case 4: Check if the maintenance window is open
-		shouldUpdate, err = r.isMaintenanceWindowOpen(ctx)
-		if err != nil {
-			return reconcile.Result{}, fmt.Errorf("checking maintenance window, %w", err)
-		}
-	}
-	if !shouldUpdate {
-		// Scenario B: Calculate any partial update based on image selectors, or newly supports SKUs
-		goalImages = overrideAnyGoalStateVersionsWithExisting(nodeClass, goalImages)
-	}
-
-	if len(goalImages) == 0 {
-		nodeClass.Status.Images = nil
-		nodeClass.StatusConditions().SetFalse(v1beta1.ConditionTypeImagesReady, "ImagesNotFound", "ImageSelectors did not match any Images")
-		logger.Info("no available node images")
-		return reconcile.Result{RequeueAfter: 5 * time.Minute}, nil
-	}
-
-	// We care about the ordering of the slices here, as it translates to priority during selection, so not treating them as sets
-	if utils.HasChanged(nodeClass.Status.Images, goalImages, &hashstructure.HashOptions{SlicesAsSets: false}) {
-		logger.Info("new available images updated for nodeclass", "existingImages", nodeClass.Status.Images, "newImages", goalImages)
-	}
-	nodeClass.Status.Images = goalImages
-	nodeClass.StatusConditions().SetTrue(v1beta1.ConditionTypeImagesReady)
-	return reconcile.Result{RequeueAfter: 5 * time.Minute}, nil
+	_ = "STUB: not implemented"
+	return *new(reconcile.Result), nil
 }
+
+// validate FIPS + useSIG
+
+// sorted for consistency
+
+// Scenario A: Check if we should do a full update to latest before processing any partial update
+//
+// Note: We want to handle cases 1-3 regardless of maintenance window state, since they are either
+// for initialization, based off an underlying customer operation, or a different update we're
+// dependant upon which would have already been preformed within its required maintenance Window.
+
+// Case 4: Check if the maintenance window is open
+
+// Scenario B: Calculate any partial update based on image selectors, or newly supports SKUs
+
+// We care about the ordering of the slices here, as it translates to priority during selection, so not treating them as sets
 
 // Handles case 1: This is a new AKSNodeClass, where images haven't been populated yet
 // Handles case 2: This is indirectly handling k8s version image bump, since k8s version sets this status to false
 // Handles case 3: Note: like k8s we would also indirectly handle node features that required an image version bump, but none required atm.
 func imageVersionsUnready(nodeClass *v1beta1.AKSNodeClass) bool {
-	return !nodeClass.StatusConditions().Get(v1beta1.ConditionTypeImagesReady).IsTrue()
+	_ = "STUB: not implemented"
+	return false
 }
 
 // Handles case 4: check if the maintenance window is open
@@ -193,64 +116,27 @@ func imageVersionsUnready(nodeClass *v1beta1.AKSNodeClass) bool {
 //
 //nolint:gocyclo
 func (r *NodeImageReconciler) isMaintenanceWindowOpen(ctx context.Context) (bool, error) {
-	logger := log.FromContext(ctx)
-	if r.systemNamespace == "" {
-		// We fail open here, since the default case should be to upgrade
-		return true, nil
-	}
-
-	mwConfigMap, err := r.inClusterKubernetesInterface.CoreV1().ConfigMaps(r.systemNamespace).Get(ctx, maintenanceWindowConfigMapName, metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			// We fail open here, since the default case should be to upgrade
-			return true, nil
-		}
-		return false, fmt.Errorf("error getting maintenance window configmap, %w", err)
-	}
-	// Monitoring the entire ConfigMap's data might catch more data changes than we care about. However, I think it makes sense to monitor
-	//     here as it does catch the entire spread of cases we care about, and will give us direct insight on the raw data.
-	// Note: we don't need to add the nodeclass name into the monitoring here, as we actually want the entries to collide, since
-	//     maintenance windows are a cluster level concept, rather that a nodeclass level type, meaning we'd have repeat redundant info
-	//     if scoping to the nodeclass.
-	// TODO: In the longer run, the maintenance window handling should be factored out into a sharable provider, rather than being contained
-	//     within the image controller itself.
-	if r.cm.HasChanged("nodeclass-maintenancewindowdata", mwConfigMap.Data) {
-		logger.Info("new maintenance window data discovered", "maintenanceWindowData", mwConfigMap.Data)
-	}
-	if len(mwConfigMap.Data) == 0 {
-		// An empty configmap means there's no maintenance windows defined, and its up to us when to preform maintenance
-		return true, nil
-	}
-
-	nextNodeOSMWStartStr, okStart := mwConfigMap.Data[fmt.Sprintf(configMapStartTimeFormat, nodeOSMaintenanceWindowChannel)]
-	nextNodeOSMWEndStr, okEnd := mwConfigMap.Data[fmt.Sprintf(configMapEndTimeFormat, nodeOSMaintenanceWindowChannel)]
-	// Treat empty string values as missing, since the ConfigMap may have keys present with empty values
-	if nextNodeOSMWStartStr == "" {
-		okStart = false
-	}
-	if nextNodeOSMWEndStr == "" {
-		okEnd = false
-	}
-	if !okStart && !okEnd {
-		// No maintenance window defined for aksManagedNodeOSUpgradeSchedule, so its up to us when to preform maintenance
-		return true, nil
-	} else if (okStart && !okEnd) || (!okStart && okEnd) {
-		return false, fmt.Errorf("unexpected state, with incomplete maintenance window data for channel %s", nodeOSMaintenanceWindowChannel)
-	}
-
-	nextNodeOSMWStart, err := time.Parse(time.RFC3339, nextNodeOSMWStartStr)
-	if err != nil {
-		return false, fmt.Errorf("error parsing maintenance window start time for channel %s, %w", nodeOSMaintenanceWindowChannel, err)
-	}
-	nextNodeOSMWEnd, err := time.Parse(time.RFC3339, nextNodeOSMWEndStr)
-	if err != nil {
-		return false, fmt.Errorf("error parsing maintenance window end time for channel %s, %w", nodeOSMaintenanceWindowChannel, err)
-	}
-
-	now := time.Now().UTC()
-
-	return now.After(nextNodeOSMWStart.UTC()) && now.Before(nextNodeOSMWEnd.UTC()), nil
+	_ = "STUB: not implemented"
+	return false, nil
 }
+
+// We fail open here, since the default case should be to upgrade
+
+// We fail open here, since the default case should be to upgrade
+
+// Monitoring the entire ConfigMap's data might catch more data changes than we care about. However, I think it makes sense to monitor
+//     here as it does catch the entire spread of cases we care about, and will give us direct insight on the raw data.
+// Note: we don't need to add the nodeclass name into the monitoring here, as we actually want the entries to collide, since
+//     maintenance windows are a cluster level concept, rather that a nodeclass level type, meaning we'd have repeat redundant info
+//     if scoping to the nodeclass.
+// TODO: In the longer run, the maintenance window handling should be factored out into a sharable provider, rather than being contained
+//     within the image controller itself.
+
+// An empty configmap means there's no maintenance windows defined, and its up to us when to preform maintenance
+
+// Treat empty string values as missing, since the ConfigMap may have keys present with empty values
+
+// No maintenance window defined for aksManagedNodeOSUpgradeSchedule, so its up to us when to preform maintenance
 
 // overrideAnyGoalStateVersionsWithExisting: will look over all the discovered images, and choose to either keep the existing version if already found in the status
 // or merge the new version in. This will discard any images that are no longer selected for as well. Results in picking up new images, while also not bumping
@@ -264,29 +150,15 @@ func (r *NodeImageReconciler) isMaintenanceWindowOpen(ctx context.Context) (bool
 //
 // TODO: Need longer term design for handling newly supported versions, and other image selectors.
 func overrideAnyGoalStateVersionsWithExisting(nodeClass *v1beta1.AKSNodeClass, discoveredImages []v1beta1.NodeImage) []v1beta1.NodeImage {
-	existingBaseIDMapping := mapImageBasesToImages(nodeClass.Status.Images)
-
-	updatedImages := []v1beta1.NodeImage{}
-	// Note: we have to range over the discovered images here, instead of converting to a baseIDMapping, to keep the ordering consistent
-	for i := range discoveredImages {
-		discoveredImage := discoveredImages[i]
-		discoveredBaseImageID := trimVersionSuffix(discoveredImage.ID)
-		if existingImage, ok := existingBaseIDMapping[discoveredBaseImageID]; ok {
-			updatedImages = append(updatedImages, *existingImage)
-		} else {
-			updatedImages = append(updatedImages, discoveredImage)
-		}
-	}
-	return updatedImages
+	_ = "STUB: not implemented"
+	return nil
 }
 
+// Note: we have to range over the discovered images here, instead of converting to a baseIDMapping, to keep the ordering consistent
+
 func mapImageBasesToImages(images []v1beta1.NodeImage) map[string]*v1beta1.NodeImage {
-	imagesBaseMapping := map[string]*v1beta1.NodeImage{}
-	for i := range images {
-		baseID := trimVersionSuffix(images[i].ID)
-		imagesBaseMapping[baseID] = &images[i]
-	}
-	return imagesBaseMapping
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // Trims off the version suffix, and leaves just the image base id
@@ -299,8 +171,4 @@ func mapImageBasesToImages(images []v1beta1.NodeImage) map[string]*v1beta1.NodeI
 // - SIG:
 //   - Input: /subscriptions/10945678-1234-1234-1234-123456789012/resourceGroups/AKS-Ubuntu/providers/Microsoft.Compute/galleries/AKSUbuntu/images/2204gen2containerd/versions/2022.10.03
 //   - Output: /subscriptions/10945678-1234-1234-1234-123456789012/resourceGroups/AKS-Ubuntu/providers/Microsoft.Compute/galleries/AKSUbuntu/images/2204gen2containerd
-func trimVersionSuffix(imageID string) string {
-	imageIDParts := strings.Split(imageID, "/")
-	baseID := strings.Join(imageIDParts[0:len(imageIDParts)-2], "/")
-	return baseID
-}
+func trimVersionSuffix(imageID string) string { _ = "STUB: not implemented"; return "" }

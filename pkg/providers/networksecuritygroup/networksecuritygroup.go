@@ -18,15 +18,11 @@ package networksecuritygroup
 
 import (
 	"context"
-	"fmt"
 	"regexp"
-	"strings"
 	"sync"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
-	"github.com/samber/lo"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type API interface {
@@ -38,13 +34,7 @@ var managedNSGRegex = regexp.MustCompile(`(?i)^aks-agentpool-(\d{8})-nsg$`)
 
 // GetClusterIDFromNSGName extracts the 8-digit cluster ID from a managed NSG name.
 // For example, "aks-agentpool-46593302-nsg" returns "46593302".
-func GetClusterIDFromNSGName(nsgName string) string {
-	match := managedNSGRegex.FindStringSubmatch(nsgName)
-	if len(match) < 2 {
-		return ""
-	}
-	return match[1]
-}
+func GetClusterIDFromNSGName(nsgName string) string { _ = "STUB: not implemented"; return "" }
 
 type Provider struct {
 	nsgAPI        API
@@ -55,60 +45,23 @@ type Provider struct {
 }
 
 // NewProvider creates a new LoadBalancer provider
-func NewProvider(nsgAPI API, resourceGroup string) *Provider {
-	return &Provider{
-		nsgAPI:        nsgAPI,
-		resourceGroup: resourceGroup,
-	}
-}
+func NewProvider(nsgAPI API, resourceGroup string) *Provider { _ = "STUB: not implemented"; return nil }
 
 func (p *Provider) ManagedNetworkSecurityGroup(ctx context.Context) (*armnetwork.SecurityGroup, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	// If we've already found the managed NSG, returned the cached result
-	if p.nsg != nil {
-		return p.nsg, nil
-	}
-
-	nsgs, err := p.loadFromAzure(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Only consider the NSGs we actually care about
-	managedNSGs := lo.Filter(nsgs, isClusterNSG)
-	log.FromContext(ctx).Info("found NSGs of interest", "nsgCount", len(managedNSGs))
-
-	if len(managedNSGs) == 0 {
-		return nil, fmt.Errorf("couldn't find managed NSG")
-	}
-	if len(managedNSGs) > 1 {
-		return nil, fmt.Errorf("found multiple NSGs: %s", strings.Join(lo.Map(managedNSGs, func(nsg *armnetwork.SecurityGroup, _ int) string { return lo.FromPtr(nsg.Name) }), ","))
-	}
-
-	p.nsg = managedNSGs[0]
-	return p.nsg, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
+// If we've already found the managed NSG, returned the cached result
+
+// Only consider the NSGs we actually care about
+
 func (p *Provider) loadFromAzure(ctx context.Context) ([]*armnetwork.SecurityGroup, error) {
-	log.FromContext(ctx).Info("querying nsgs in resource group", "resourceGroup", p.resourceGroup)
-
-	pager := p.nsgAPI.NewListPager(p.resourceGroup, nil)
-
-	var nsgs []*armnetwork.SecurityGroup
-	for pager.More() {
-		page, err := pager.NextPage(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get next nsg page: %w", err)
-		}
-		nsgs = append(nsgs, page.Value...)
-	}
-
-	return nsgs, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 func isClusterNSG(nsg *armnetwork.SecurityGroup, _ int) bool {
-	name := lo.FromPtr(nsg.Name)
-	return managedNSGRegex.MatchString(name)
+	_ = "STUB: not implemented"
+	return false
 }

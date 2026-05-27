@@ -19,7 +19,6 @@ package instance
 import (
 	"context"
 
-	sdkerrors "github.com/Azure/azure-sdk-for-go-extensions/pkg/errors"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v7"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	"github.com/Azure/karpenter-provider-azure/pkg/providers/azclient/azapi"
@@ -32,17 +31,8 @@ func CreateVirtualMachine(
 	vmName string,
 	vm armcompute.VirtualMachine,
 ) (*armcompute.VirtualMachine, error) {
-	poller, err := client.BeginCreateOrUpdate(ctx, rg, vmName, vm, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := poller.PollUntilDone(ctx, defaultPollerOptions())
-	if err != nil {
-		return nil, err
-	}
-
-	return &res.VirtualMachine, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 func UpdateVirtualMachine(
@@ -52,16 +42,7 @@ func UpdateVirtualMachine(
 	vmName string,
 	updates armcompute.VirtualMachineUpdate,
 ) error {
-	poller, err := client.BeginUpdate(ctx, rg, vmName, updates, nil)
-	if err != nil {
-		return err
-	}
-
-	_, err = poller.PollUntilDone(ctx, defaultPollerOptions())
-	if err != nil {
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
@@ -73,17 +54,8 @@ func createVirtualMachineExtension(
 	extensionName string,
 	vmExt armcompute.VirtualMachineExtension,
 ) (*armcompute.VirtualMachineExtension, error) {
-	poller, err := client.BeginCreateOrUpdate(ctx, rg, vmName, extensionName, vmExt, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := poller.PollUntilDone(ctx, defaultPollerOptions())
-	if err != nil {
-		return nil, err
-	}
-
-	return &res.VirtualMachineExtension, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 func createNic(
@@ -93,44 +65,16 @@ func createNic(
 	nicName string,
 	nic armnetwork.Interface,
 ) (*armnetwork.Interface, error) {
-	poller, err := client.BeginCreateOrUpdate(ctx, rg, nicName, nic, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := poller.PollUntilDone(ctx, defaultPollerOptions())
-	if err != nil {
-		return nil, err
-	}
-
-	return &res.Interface, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 func deleteNic(ctx context.Context, client azapi.NetworkInterfacesAPI, rg, nicName string) error {
-	poller, err := client.BeginDelete(ctx, rg, nicName, nil)
-	if err != nil {
-		return err
-	}
-
-	_, err = poller.PollUntilDone(ctx, defaultPollerOptions())
-	if err != nil {
-		if sdkerrors.IsNotFoundErr(err) {
-			return nil
-		}
-
-		return err
-	}
-
+	_ = "STUB: not implemented"
 	return nil
 }
 
 func deleteNicIfExists(ctx context.Context, client azapi.NetworkInterfacesAPI, rg, nicName string) error {
-	_, err := client.Get(ctx, rg, nicName, nil)
-	if err != nil {
-		if sdkerrors.IsNotFoundErr(err) {
-			return nil
-		}
-		return err
-	}
-	return deleteNic(ctx, client, rg, nicName)
+	_ = "STUB: not implemented"
+	return nil
 }

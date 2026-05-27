@@ -17,14 +17,7 @@ limitations under the License.
 package test
 
 import (
-	"context"
-
 	karpv1 "sigs.k8s.io/karpenter/pkg/apis/v1"
-	"sigs.k8s.io/karpenter/pkg/test"
 )
 
-func NodePool(options karpv1.NodePool) *karpv1.NodePool {
-	nodePool := test.NodePool(options)
-	nodePool.SetDefaults(context.Background())
-	return nodePool
-}
+func NodePool(options karpv1.NodePool) *karpv1.NodePool { _ = "STUB: not implemented"; return nil }
